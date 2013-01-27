@@ -157,6 +157,10 @@ STF_TEST("vector methods") {
 		STF_ASSERT(check_vector(e, {1, 10, -10, 2, 3, 10, -10}));
 		e.insert_after(1, d.sub());
 		STF_ASSERT(check_vector(e, {1, 10, 10, -10, -10, 2, 3, 10, -10}));
+
+		zbs::vector<int> f = { 1, 4, 5 };
+		f.insert_after(0, { 2, 3 });
+		STF_ASSERT(check_vector(f, { 1, 2, 3, 4, 5 }));
 	}
 
 	{
@@ -177,6 +181,10 @@ STF_TEST("vector methods") {
 		STF_ASSERT(check_vector(d, {10, -10, 1, 2, 10, -10, 3}));
 		d.insert_before(2, c.sub());
 		STF_ASSERT(check_vector(d, {10, -10, 10, -10, 1, 2, 10, -10, 3}));
+
+		zbs::vector<int> e = { 1, 4, 5 };
+		e.insert_before(1, { 2, 3 });
+		STF_ASSERT(check_vector(e, { 1, 2, 3, 4, 5 }));
 	}
 
 	{
@@ -192,6 +200,10 @@ STF_TEST("vector methods") {
 		zbs::vector<int> c = {10, 20, 30, 40, 50};
 		b.append(c.sub(1, 3));
 		STF_ASSERT(check_vector(b, {1, 2, 20, 30}));
+
+		zbs::vector<int> d = { 1, 2, 3 };
+		d.append({ 4, 5 });
+		STF_ASSERT(check_vector(d, { 1, 2, 3, 4, 5 }));
 	}
 
 	{

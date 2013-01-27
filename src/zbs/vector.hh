@@ -287,6 +287,15 @@ public:
 		}
 	}
 
+	void insert_after(int idx, std::initializer_list<T> r) {
+		_ZBS_BOUNDS_CHECK(idx, _len);
+		if (idx == _len - 1) {
+			append(r);
+		} else {
+			insert_before(idx + 1, r);
+		}
+	}
+
 	void insert_after(int idx, slice<T> s) {
 		insert_after(idx, slice<const T>(s));
 	}
@@ -303,6 +312,20 @@ public:
 		_len += s.len();
 	}
 
+	void insert_before(int idx, std::initializer_list<T> r) {
+		_ZBS_BOUNDS_CHECK(idx, _len);
+		if (_len + r.size() > _cap) {
+			reserve(_new_size(_len + r.size()));
+		}
+		_move_forward(idx, r.size());
+
+		auto it = r.begin();
+		for (int i = 0; i < r.size(); i++) {
+			new (&_data[idx + i]) T(*it++);
+		}
+		_len += r.size();
+	}
+
 	void insert_before(int idx, slice<T> s) {
 		insert_before(idx, slice<const T>(s));
 	}
@@ -316,6 +339,18 @@ public:
 			new (&_data[_len + i]) T(s.data()[i]);
 		}
 		_len += s.len();
+	}
+
+	void append(std::initializer_list<T> r) {
+		if (_len + r.size() > _cap) {
+			reserve(_new_size(_len + r.size()));
+		}
+
+		auto it = r.begin();
+		for (int i = 0; i < r.size(); i++) {
+			new (&_data[_len + i]) T(*it++);
+		}
+		_len += r.size();
 	}
 
 	void append(slice<T> s) {
