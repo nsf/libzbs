@@ -1,0 +1,3 @@
+SUBDIRS = src test
+ACLOCAL_AMFLAGS = -I ac-m4
+AM_MAKEFLAGS = -s
