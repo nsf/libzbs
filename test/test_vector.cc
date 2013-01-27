@@ -161,7 +161,6 @@ STF_TEST("vector methods") {
 		zbs::vector<int> f = { 1, 4, 5 };
 		f.insert_after(0, { 2, 3 });
 		STF_ASSERT(check_vector(f, { 1, 2, 3, 4, 5 }));
-		STF_ASSERT(f.len() == 5);
 	}
 
 	{
@@ -186,7 +185,6 @@ STF_TEST("vector methods") {
 		zbs::vector<int> e = { 1, 4, 5 };
 		e.insert_before(1, { 2, 3 });
 		STF_ASSERT(check_vector(e, { 1, 2, 3, 4, 5 }));
-		STF_ASSERT(e.len() == 5);
 	}
 
 	{
@@ -206,7 +204,6 @@ STF_TEST("vector methods") {
 		zbs::vector<int> d = { 1, 2, 3 };
 		d.append({ 4, 5 });
 		STF_ASSERT(check_vector(d, { 1, 2, 3, 4, 5 }));
-		STF_ASSERT(d.len() == 5);
 	}
 
 	{
