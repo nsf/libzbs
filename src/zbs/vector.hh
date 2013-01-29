@@ -358,7 +358,7 @@ public:
 	}
 
 	void remove(int begin, int end) {
-		_ZBS_ASSERT(begin < end);
+		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		const int len = end - begin;
@@ -382,7 +382,7 @@ public:
 	}
 
 	slice<T> sub(int begin, int end) {
-		_ZBS_ASSERT(begin < end);
+		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
@@ -398,7 +398,7 @@ public:
 	}
 
 	slice<const T> sub(int begin, int end) const {
-		_ZBS_ASSERT(begin < end);
+		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};

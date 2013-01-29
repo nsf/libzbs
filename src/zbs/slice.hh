@@ -82,7 +82,7 @@ public:
 		return {_data + begin, _len - begin};
 	}
 	slice sub(int begin, int end) {
-		_ZBS_ASSERT(begin < end);
+		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
@@ -95,7 +95,7 @@ public:
 		return {_data + begin, _len - begin};
 	}
 	slice<const T> sub(int begin, int end) const {
-		_ZBS_ASSERT(begin < end);
+		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
