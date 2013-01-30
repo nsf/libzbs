@@ -4,6 +4,8 @@
 #include <cstring>
 #include <limits>
 #include <algorithm>
+
+#include "_utils.hh"
 #include "slice.hh"
 
 namespace zbs {

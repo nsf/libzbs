@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cstdlib>
 
-#include "error.hh"
+#include "_utils.hh"
 #include "slice.hh"
 
 namespace zbs {
