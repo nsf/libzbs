@@ -196,4 +196,60 @@ bool operator<=(slice<T> lhs, slice<T> rhs) { return !operator<(rhs, lhs); }
 template <typename T>
 bool operator>(slice<T> lhs, slice<T> rhs) { return operator<(rhs, lhs); }
 
+//============================================================================
+// slice comparison operators
+//============================================================================
+
+namespace detail {
+
+template <typename T, typename U, bool is_pod>
+struct copier;
+
+template <typename T, typename U>
+struct copier<T, U, false> {
+	static int copy(slice<T> dst, slice<U> src) {
+		const int n = std::min(dst.len(), src.len());
+		if (n == 0) {
+			return 0;
+		}
+
+		const T *srcp = src.data();
+		T *dstp = dst.data();
+		if (srcp == dstp) {
+			return n;
+		}
+
+		if (srcp < dstp) {
+			for (int i = n-1; i >= 0; i--) {
+				dstp[i] = srcp[i];
+			}
+		} else {
+			for (int i = 0; i < n; i++) {
+				dstp[i] = srcp[i];
+			}
+		}
+		return n;
+	}
+};
+
+template <typename T, typename U>
+struct copier<T, U, true> {
+	static int copy(slice<T> dst, slice<U> src) {
+		const int n = std::min(dst.len(), src.len());
+		if (n == 0) {
+			return 0;
+		}
+		::memmove(dst.data(), src.data(), n * sizeof(T));
+		return n;
+	}
+};
+
+} // namespace zbs::detail
+
+template <typename T, typename U, bool is_pod = std::is_pod<T>::value>
+int copy(slice<T> dst, slice<U> src) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return detail::copier<T, U, is_pod>::copy(dst, src);
+}
+
 } // namespace zbs
