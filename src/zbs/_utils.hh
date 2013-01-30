@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include "_config.h"
 
 #ifdef ZBS_ENABLE_ASSERT
 	#define _ZBS_ASSERT(expr)				\
