@@ -323,6 +323,8 @@ public:
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
+	operator slice<char>() { return sub(); }
+	operator slice<const char>() const { return sub(); }
 };
 
 bool operator==(const string &lhs, const string &rhs);
