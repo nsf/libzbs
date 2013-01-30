@@ -16,7 +16,7 @@ AC_ARG_ENABLE([assert],
 	[],
 	AC_DEFINE([ZBS_ENABLE_ASSERT], [1], [Enables assertion checks within the zbs library]))
 
-AC_CONFIG_HEADERS([config.h public_config.h])
+AC_CONFIG_HEADERS([config.h _config.h])
 AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
 
 AC_OUTPUT

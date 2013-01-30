@@ -1,32 +1,6 @@
 #pragma once
 
-#include "public_config.h"
-
-//============================================================================
-// a couple of useful error checking macros
-//============================================================================
-#ifdef ZBS_ENABLE_ASSERT
-	#define _ZBS_ASSERT(expr)				\
-	do {							\
-		if (!(expr)) {					\
-			zbs::detail::assert_abort(#expr,	\
-				__FILE__, __LINE__,		\
-				__PRETTY_FUNCTION__);		\
-		}						\
-	} while (0)
-#else
-	#define _ZBS_ASSERT(expr) ((void)0)
-#endif
-
-#define _ZBS_BOUNDS_CHECK(index, length) \
-	_ZBS_ASSERT((unsigned int)(index) < (unsigned int)(length))
-
 namespace zbs {
-namespace detail {
-
-void assert_abort(const char *assertion, const char *file, int line, const char *func);
-
-} // namespace zbs::detail
 
 //============================================================================
 // error_domain
