@@ -1,0 +1,23 @@
+# autotools crap
+Makefile
+Makefile.in
+/ac-aux
+/ac-m4
+/aclocal.m4
+/autom4te.cache
+/config.*
+/configure
+/libtool
+/_config.h
+.deps/
+.libs/
+*.la
+*.lo
+*.o
+/stamp-h1
+/stamp-h2
+
+# ignore all from the test dir, except *.cc and Makefile.am
+/test/*
+!/test/*.cc
+!/test/Makefile.am
