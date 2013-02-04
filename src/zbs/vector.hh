@@ -38,7 +38,7 @@ class vector {
 	int _len;
 	int _cap;
 
-	int _new_size(int requested) const {
+	inline int _new_size(int requested) const {
 		const int max = std::numeric_limits<int>::max();
 		if (_cap > max) {
 			return max;
@@ -47,7 +47,7 @@ class vector {
 	}
 
 	// expects: idx < _len, idx >= 0, offset > 0
-	void _move_forward(int idx, int offset) {
+	inline void _move_forward(int idx, int offset) {
 		const int last = _len-1;
 		int src = last;
 		int dst = last+offset;
@@ -60,7 +60,7 @@ class vector {
 	}
 
 	// expects: idx < _len, idx >= 0, offset < 0
-	void _move_backward(int idx, int offset) {
+	inline void _move_backward(int idx, int offset) {
 		int src = idx;
 		int dst = idx+offset;
 		while (src < _len) {
@@ -71,23 +71,58 @@ class vector {
 		}
 	}
 
+	// ensure that there is enough capacity to hold _len + n items
+	inline void _ensure_capacity(int n) {
+		if (_len + n > _cap) {
+			reserve(_new_size(_len + n));
+		}
+	}
+
+	// this one is called when `s` points to the vector itself
+	inline void _self_insert(int idx, slice<const T> s) {
+		// slice data index, we need it because slice will be
+		// invalidated (possibly) after _ensure_capacity call
+		int sidx = s.data() - _data;
+		_ensure_capacity(s.len());
+		s = slice<const T>(_data + sidx, s.len()); // restore slice
+		if (idx == _len) {
+			// shortcut for append
+			for (int i = 0; i < s.len(); i++) {
+				new (&_data[idx+i]) T(s.data()[i]);
+			}
+			_len += s.len();
+			return;
+		}
+
+		_move_forward(idx, s.len());
+		_len += s.len();
+		if (idx <= sidx) {
+			// slice points somewhere after insertion place, adjust
+			// the slice according to _move_forward result
+			s = slice<const T>(s.data() + s.len(), s.len());
+		} else if (sidx < idx && idx < sidx + s.len()) {
+			// the most complicated case, idx is somewhere on the
+			// slice (not at the beginning of the slice), means we
+			// need to split the slice into two and insert them
+			// separately
+			const int lhslen = idx - sidx;
+			for (int i = 0; i < lhslen; i++) {
+				new (&_data[idx+i]) T(_data[sidx+i]);
+			}
+			idx += lhslen;
+			s = slice<const T>(s.data() + s.len() + lhslen, s.len() - lhslen);
+		}
+		for (int i = 0; i < s.len(); i++) {
+			new (&_data[idx+i]) T(s.data()[i]);
+		}
+	}
+
 public:
 	vector(): _data(nullptr), _len(0), _cap(0) {}
 
-	vector(std::initializer_list<T> r): _len(r.size()), _cap(r.size()) {
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
-		auto it = r.begin();
-		for (int i = 0; i < _len; i++) {
-			new (&_data[i]) T(*it++);
-		}
-	}
+	vector(std::initializer_list<T> r): vector(slice<const T>(r)) {}
 
-	vector(const vector &r): _len(r._len), _cap(r._len) {
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
-		for (int i = 0; i < _len; i++) {
-			new (&_data[i]) T(r._data[i]);
-		}
-	}
+	vector(const vector &r): vector(slice<const T>(r)) {}
 
 	vector(vector &&r): _data(r._data), _len(r._len), _cap(r._cap) {
 		r._data = nullptr;
@@ -95,7 +130,10 @@ public:
 		r._cap = 0;
 	}
 
-	vector(slice<const T> r): _len(r.len()), _cap(r.len()) {
+	vector(slice<const T> r): _data(nullptr), _len(r.len()), _cap(r.len()) {
+		if (_len == 0) {
+			return;
+		}
 		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
 		for (int i = 0; i < _len; i++) {
 			new (&_data[i]) T(r.data()[i]);
@@ -104,44 +142,89 @@ public:
 
 	vector(slice<T> r): vector(slice<const T>(r)) {}
 
-	vector &operator=(std::initializer_list<T> r) {
+	explicit vector(int n): _data(nullptr), _len(n), _cap(n) {
+		_ZBS_ASSERT(n >= 0);
+		if (_len == 0) {
+			return;
+		}
+		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		for (int i = 0; i < _len; i++) {
+			new (&_data[i]) T;
+		}
+	}
+
+	vector(int n, const T &elem): _data(nullptr), _len(n), _cap(n) {
+		_ZBS_ASSERT(n >= 0);
+		if (_len == 0) {
+			return;
+		}
+		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		for (int i = 0; i < _len; i++) {
+			new (&_data[i]) T(elem);
+		}
+	}
+
+	~vector() {
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
 		}
-		if (_cap < r.size()) {
-			free(static_cast<void*>(_data));
-			_cap = r.size();
-			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		free(_data);
+	}
+
+	vector &operator=(slice<const T> r) {
+		if (r.data() == _data) {
+			// self copy shortcut (a = a)
+			return *this;
 		}
-		_len = r.size();
-		auto it = r.begin();
-		for (int i = 0; i < _len; i++) {
-			new (&_data[i]) T(*it++);
+		if (r.len() > _cap) {
+			// slice is bigger than we are, realloc needed, also it
+			// means slice cannot point to ourselves and it is save
+			// to destroy ourselves
+			for (int i = 0; i < _len; i++) {
+				_data[i].~T();
+			}
+			free(_data);
+			_cap = _len = r.len();
+			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+			for (int i = 0; i < _len; i++) {
+				new (&_data[i]) T(r.data()[i]);
+			}
+		} else {
+			// slice can be a subset of ourselves
+			int i = copy(sub(), r);
+			for (; i < _len; i++) {
+				// destroy the rest if any
+				_data[i].~T();
+			}
+			for (; i < r.len(); i++) {
+				// construct the new if any
+				new (&_data[i]) T(r.data()[i]);
+			}
+			_len = r.len();
 		}
 		return *this;
+	}
+
+	vector &operator=(slice<T> r) {
+		return operator=(slice<const T>(r));
+	}
+
+	vector &operator=(std::initializer_list<T> r) {
+		return operator=(slice<const T>(r));
 	}
 
 	vector &operator=(const vector &r) {
-		for (int i = 0; i < _len; i++) {
-			_data[i].~T();
-		}
-		if (_cap < r._len) {
-			free(static_cast<void*>(_data));
-			_cap = r._len;
-			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
-		}
-		_len = r._len;
-		for (int i = 0; i < _len; i++) {
-			new (&_data[i]) T(r._data[i]);
-		}
-		return *this;
+		return operator=(slice<const T>(r));
 	}
 
 	vector &operator=(vector &&r) {
+		if (&r == this) {
+			return *this;
+		}
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
 		}
-		free(static_cast<void*>(_data));
+		free(_data);
 		_data = r._data;
 		_len = r._len;
 		_cap = r._cap;
@@ -151,10 +234,10 @@ public:
 		return *this;
 	}
 
-	int len() const { return _len; }
-	int cap() const { return _cap; }
-	T *data() { return _data; }
-	const T *data() const { return _data; }
+	inline int len() const { return _len; }
+	inline int cap() const { return _cap; }
+	inline T *data() { return _data; }
+	inline const T *data() const { return _data; }
 
 	void clear() {
 		for (int i = 0; i < _len; i++) {
@@ -175,7 +258,7 @@ public:
 			new (&_data[i]) T(std::move(old_data[i]));
 			old_data[i].~T();
 		}
-		free(static_cast<void*>(old_data));
+		free(old_data);
 	}
 
 	void shrink() {
@@ -185,15 +268,20 @@ public:
 
 		T *old_data = _data;
 		_cap = _len;
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
-		for (int i = 0; i < _len; i++) {
-			new (&_data[i]) T(std::move(old_data[i]));
-			old_data[i].~T();
+		if (_len > 0) {
+			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+			for (int i = 0; i < _len; i++) {
+				new (&_data[i]) T(std::move(old_data[i]));
+				old_data[i].~T();
+			}
+		} else {
+			_data = nullptr;
 		}
-		free(static_cast<void*>(old_data));
+		free(old_data);
 	}
 
 	void resize(int n) {
+		_ZBS_ASSERT(n >= 0);
 		if (_len == n) {
 			return;
 		}
@@ -208,13 +296,14 @@ public:
 
 		reserve(n);
 		for (int i = _len; i < n; i++) {
-			new (&_data[i]) T();
+			new (&_data[i]) T;
 		}
 		_len = n;
 	}
 
 	void resize(int n, const T &elem) {
 		// copy & paste from resize(int)
+		_ZBS_ASSERT(n >= 0);
 		if (_len == n) {
 			return;
 		}
@@ -235,37 +324,24 @@ public:
 	}
 
 	template <typename ...Args>
-	void insert_after(int idx, Args &&...args) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (idx == _len - 1) {
-			append(std::forward<Args>(args)...);
-		} else {
-			insert_before(idx+1, std::forward<Args>(args)...);
+	inline void pinsert(int idx, Args &&...args) {
+		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ensure_capacity(1);
+		if (idx < _len) {
+			_move_forward(idx, 1);
 		}
-	}
-
-	template <typename ...Args>
-	void insert_before(int idx, Args &&...args) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (_len + 1 > _cap) {
-			reserve(_new_size(_len + 1));
-		}
-		_move_forward(idx, 1);
 		new (&_data[idx]) T(std::forward<Args>(args)...);
 		_len++;
 	}
 
 	template <typename ...Args>
-	void append(Args &&...args) {
-		if (_len + 1 > _cap) {
-			reserve(_new_size(_len + 1));
-		}
-
+	inline void pappend(Args &&...args) {
+		_ensure_capacity(1);
 		new (&_data[_len]) T(std::forward<Args>(args)...);
 		_len++;
 	}
 
-	void remove(int idx) {
+	inline void remove(int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		if (idx == _len - 1) {
 			_data[_len-1].~T();
@@ -278,144 +354,107 @@ public:
 		_len--;
 	}
 
-	void insert_after(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (idx == _len - 1) {
-			append(s);
-		} else {
-			insert_before(idx+1, s);
+	inline void insert(int idx, slice<const T> s) {
+		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		if (s.len() == 0) {
+			return;
 		}
-	}
-
-	void insert_after(int idx, std::initializer_list<T> r) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (idx == _len - 1) {
-			append(r);
-		} else {
-			insert_before(idx + 1, r);
+		if (s.data() >= _data && s.data() < _data + _len) {
+			// if slice points to ourselves, use special magic
+			_self_insert(idx, s);
+			return;
 		}
-	}
-
-	void insert_after(int idx, slice<T> s) {
-		insert_after(idx, slice<const T>(s));
-	}
-
-	void insert_before(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (_len + s.len() > _cap) {
-			reserve(_new_size(_len + s.len()));
+		_ensure_capacity(s.len());
+		if (idx < _len) {
+			_move_forward(idx, s.len());
 		}
-		_move_forward(idx, s.len());
 		for (int i = 0; i < s.len(); i++) {
 			new (&_data[idx+i]) T(s.data()[i]);
 		}
 		_len += s.len();
 	}
 
-	void insert_before(int idx, std::initializer_list<T> r) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (_len + r.size() > _cap) {
-			reserve(_new_size(_len + r.size()));
-		}
-		_move_forward(idx, r.size());
-
-		auto it = r.begin();
-		for (int i = 0; i < r.size(); i++) {
-			new (&_data[idx + i]) T(*it++);
-		}
-		_len += r.size();
+	inline void insert(int idx, const T &elem) {
+		pinsert(idx, elem);
 	}
 
-	void insert_before(int idx, slice<T> s) {
-		insert_before(idx, slice<const T>(s));
+	inline void insert(int idx, T &&elem) {
+		pinsert(idx, elem);
 	}
 
-	void append(slice<const T> s) {
-		if (_len + s.len() > _cap) {
-			reserve(_new_size(_len + s.len()));
-		}
-
-		for (int i = 0; i < s.len(); i++) {
-			new (&_data[_len + i]) T(s.data()[i]);
-		}
-		_len += s.len();
+	inline void append(slice<const T> s) {
+		insert(_len, s);
 	}
 
-	void append(std::initializer_list<T> r) {
-		if (_len + r.size() > _cap) {
-			reserve(_new_size(_len + r.size()));
-		}
-
-		auto it = r.begin();
-		for (int i = 0; i < r.size(); i++) {
-			new (&_data[_len + i]) T(*it++);
-		}
-		_len += r.size();
+	inline void append(const T &elem) {
+		pappend(elem);
 	}
 
-	void append(slice<T> s) {
-		append(slice<const T>(s));
+	inline void append(T &&elem) {
+		pappend(elem);
 	}
 
-	void remove(int begin, int end) {
+	inline void remove(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		const int len = end - begin;
+		if (len == 0) {
+			return;
+		}
 		for (int i = begin; i < end; i++) {
 			_data[i].~T();
 		}
-
 		if (end < _len) {
 			_move_backward(begin+len, -len);
 		}
 		_len -= len;
 	}
 
-	slice<T> sub() {
+	inline slice<T> sub() {
 		return {_data, _len};
 	}
 
-	slice<T> sub(int begin) {
+	inline slice<T> sub(int begin) {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
-	slice<T> sub(int begin, int end) {
+	inline slice<T> sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
 	}
 
-	slice<const T> sub() const {
+	inline slice<const T> sub() const {
 		return {_data, _len};
 	}
 
-	slice<const T> sub(int begin) const {
+	inline slice<const T> sub(int begin) const {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
-	slice<const T> sub(int begin, int end) const {
+	inline slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
 	}
 
-	T &operator[](int idx) {
+	inline T &operator[](int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
-	const T &operator[](int idx) const {
+	inline const T &operator[](int idx) const {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
-	operator slice<T>() { return {_data, _len}; }
-	operator slice<const T>() const { return {_data, _len}; }
+	inline operator slice<T>() { return {_data, _len}; }
+	inline operator slice<const T>() const { return {_data, _len}; }
 };
 
 } // namespace zbs

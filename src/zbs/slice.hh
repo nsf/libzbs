@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <initializer_list>
 #include "_utils.hh"
 
 namespace zbs {
@@ -18,6 +19,8 @@ private:								\
 									\
 public:									\
 	slice(): _data(nullptr), _len(0) {}				\
+	slice(std::initializer_list<T> r):				\
+		_data(r.begin()), _len(r.size()) {}			\
 	slice(const T *data, int len): _data(data), _len(len) {}	\
 	slice(const slice<T> &r): _data(r.data()), _len(r.len()) {}	\
 	slice(const slice &r) = default;				\
