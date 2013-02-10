@@ -17,7 +17,8 @@ Makefile.in
 /stamp-h1
 /stamp-h2
 
-# ignore all from the test dir, except *.cc and Makefile.am
+# ignore all from the test dir, except *.cc, *.hh and Makefile.am
 /test/*
 !/test/*.cc
+!/test/*.hh
 !/test/Makefile.am
