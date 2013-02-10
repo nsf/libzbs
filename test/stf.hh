@@ -21,20 +21,18 @@ static void _MCC(_test_func_, __LINE__)(stf::runner &__R, stf::test &__T)
 #define STF_SUITE_NAME(name)									\
 static stf::name_setter _MCC(_name_setter_, __LINE__)(_stf_runner, name);
 
-#define STF_LOGF(...) __R.logf(__LINE__, __FILE__, __VA_ARGS__)
-#define STF_RAW_LOGF(...) __R.logf(0, nullptr, __VA_ARGS__)
-#define STF_PRINTF(...) __R.printf(__LINE__, __FILE__, __VA_ARGS__)
-#define STF_RAW_PRINTF(...) __R.printf(0, nullptr, __VA_ARGS__)
+#define STF_PRINTF(...) __T.printf(__LINE__, __FILE__, __VA_ARGS__)
+#define STF_RAW_PRINTF(...) __T.printf(0, nullptr, __VA_ARGS__)
 #define STF_ERRORF(...)										\
 do {												\
-	__R.printf(__LINE__, __FILE__, __VA_ARGS__);						\
+	__T.printf(__LINE__, __FILE__, __VA_ARGS__);						\
 	__T.status = false;									\
 } while (0)
 
 #define STF_ASSERT(expr)									\
 do {												\
 	if (!(expr)) {										\
-		__R.printf(__LINE__, __FILE__, "assertion failed: %s", #expr);			\
+		__T.printf(__LINE__, __FILE__, "assertion failed: %s", #expr);			\
 		__T.status = false;								\
 	}											\
 } while (0)
@@ -47,11 +45,31 @@ struct test;
 typedef void (*functype)(runner&, test&);
 
 struct test {
-	std::string name;
+	std::string name = "<unnamed>";
+	std::vector<std::string> messages;
 	functype func;
 	bool status = true;
 
 	test(runner &r, std::string name, functype);
+
+	void printf(int line, const char *filename, const char *format, ...) {
+		char fileline[256];
+		char message[8192];
+		if (filename != nullptr) {
+			snprintf(fileline, sizeof(fileline), "%s:%d: ", filename, line);
+		}
+
+		va_list vl;
+		va_start(vl, format);
+		vsnprintf(message, sizeof(message), format, vl);
+		va_end(vl);
+
+		// just in case
+		fileline[sizeof(fileline)-1] = '\0';
+		message[sizeof(message)-1] = '\0';
+
+		messages.push_back(std::string(fileline) + message);
+	}
 };
 
 struct name_setter {
@@ -62,32 +80,52 @@ struct runner {
 	std::string suite_name;
 	std::vector<test> tests;
 	int failed = 0;
+	bool verbose = false;
 
-	// copy & paste from logf, without verbosity check
-	void printf(int line, const char *filename, const char *format, ...) {
-		if (filename != nullptr) {
-			fprintf(stderr, "%s:%d: ", filename, line);
+	void init(int argc, char **argv) {
+		for (int i = 0; i < argc; i++) {
+			if (strcmp(argv[i], "-v") == 0) {
+				verbose = true;
+			}
 		}
+	}
 
+	void logf_force(const char *format, ...) {
 		va_list vl;
 		va_start(vl, format);
 		vfprintf(stderr, format, vl);
 		va_end(vl);
+	}
 
-		fprintf(stderr, "\n");
+	void logf(const char *format, ...) {
+		if (!verbose) {
+			return;
+		}
+		va_list vl;
+		va_start(vl, format);
+		vfprintf(stderr, format, vl);
+		va_end(vl);
 	}
 
 	int run() {
 		runner &__R = *this; // for macros
 		auto start = std::chrono::system_clock::now();
 		for (auto &t: tests) {
-			STF_RAW_PRINTF("=== Running %s", t.name.c_str());
+			logf("%s... ", t.name.c_str());
 			(*t.func)(*this, t);
 			if (t.status) {
-				STF_RAW_PRINTF("--- PASS");
+				logf("PASS\n");
 			} else {
 				failed++;
-				STF_RAW_PRINTF("--- FAIL");
+				if (verbose) {
+					logf("FAIL\n");
+				} else {
+					logf_force("%s... FAIL\n", t.name.c_str());
+				}
+
+				for (auto const &msg: t.messages) {
+					logf_force("  %s\n", msg.c_str());
+				}
 			}
 		}
 		auto end = std::chrono::system_clock::now();
@@ -96,14 +134,14 @@ struct runner {
 		auto s_part = ms / 1000;
 		auto ms_part = ms - s_part * 1000;
 		if (failed > 0) {
-			STF_RAW_PRINTF("%d out of %d test(s) failed", failed, tests.size());
+			logf("%d out of %d test(s) failed", failed, tests.size());
 		}
 
 		if (failed > 0) {
-			STF_RAW_PRINTF("FAIL\t%s\t%d.%03ds", suite_name.c_str(), s_part, ms_part);
+			logf_force("FAIL\t%s\t%d.%03ds\n", suite_name.c_str(), s_part, ms_part);
 			return 1;
 		} else {
-			STF_RAW_PRINTF("ok\t%s\t%d.%03ds", suite_name.c_str(), s_part, ms_part);
+			logf_force("ok\t%s\t%d.%03ds\n", suite_name.c_str(), s_part, ms_part);
 			return 0;
 		}
 	}
@@ -121,5 +159,6 @@ name_setter::name_setter(runner &r, std::string name) {
 
 static stf::runner _stf_runner;
 int main(int argc, char **argv) {
+	_stf_runner.init(argc, argv);
 	return _stf_runner.run();
 }
