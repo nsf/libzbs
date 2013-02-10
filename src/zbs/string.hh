@@ -10,7 +10,7 @@
 
 namespace zbs {
 
-namespace /* zbs:: */ detail {
+namespace detail {
 
 template <typename T>
 struct char_traits {
@@ -20,7 +20,7 @@ struct char_traits {
 	}
 };
 
-} // namespace zbs::detail
+} // namespace detail
 
 //============================================================================
 // basic string template
@@ -29,11 +29,11 @@ struct char_traits {
 template <typename T>
 class basic_string {
 protected:
-	T *_data;
-	int _len;
-	int _cap; // the actual capacity is (_cap + 1) for terminating null
+	T *_data = detail::char_traits<T>::empty_string();
+	int _len = 0;
+	int _cap = 0;
 
-	int _new_size(int requested) const {
+	inline int _new_size(int requested) const {
 		const int max = std::numeric_limits<int>::max();
 		if (_cap > max) {
 			return max;
@@ -41,13 +41,51 @@ protected:
 		return std::max(_cap * 2, requested);
 	}
 
-public:
-	basic_string(): _data(detail::char_traits<T>::empty_string()), _len(0), _cap(0) {}
-
-	basic_string(const basic_string &r): _len(r._len), _cap(r._len) {
-		_data = static_cast<T*>(malloc((_len + 1) * sizeof(T)));
-		::memcpy(_data, r._data, (_len + 1) * sizeof(T));
+	// ensure that there is enough capacity to hold _len + n items
+	inline void _ensure_capacity(int n) {
+		if (_len + n > _cap) {
+			reserve(_new_size(_len + n));
+		}
 	}
+
+	inline void _self_insert(int idx, slice<const T> s) {
+		int sidx = s.data() - _data;
+		_ensure_capacity(s.len());
+		s = slice<const T>(_data + sidx, s.len()); // restore slice
+		if (idx == _len) {
+			::memcpy(_data + idx, s.data(), s.len() * sizeof(T));
+			_len += s.len();
+			_data[_len] = 0;
+			return;
+		}
+
+		::memmove(_data + idx + s.len(), _data + idx, (_len - idx) * sizeof(T));
+		_len += s.len();
+		if (idx <= sidx) {
+			s = slice<const T>(s.data() + s.len(), s.len());
+		} else {
+			const int lhslen = idx - sidx;
+			::memmove(_data + idx, _data + sidx, lhslen * sizeof(T));
+			idx += lhslen;
+			s = slice<const T>(s.data() + s.len() + lhslen, s.len() - lhslen);
+		}
+		::memmove(_data + idx, s.data(), s.len() * sizeof(T));
+		_data[_len] = 0;
+	}
+
+public:
+	basic_string() {}
+
+	basic_string(slice<const T> r): _len(r.len()), _cap(r.len()) {
+		if (_len == 0) {
+			return;
+		}
+		_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
+		::memcpy(_data, r.data(), r.len() * sizeof(T));
+		_data[_len] = 0;
+	}
+
+	basic_string(const basic_string &r): basic_string(slice<const T>(r.sub())) {}
 
 	basic_string(basic_string &&r): _data(r._data), _len(r._len), _cap(r._cap) {
 		r._data = detail::char_traits<T>::empty_string();
@@ -58,22 +96,41 @@ public:
 	~basic_string() {
 		// _data is always != nullptr, we can't use it to see it the
 		// memory was actually allocated
-		if (_cap > 0) {
-			free(static_cast<void*>(_data));
+		if (_data != detail::char_traits<T>::empty_string()) {
+			free(_data);
 		}
 	}
 
-	basic_string &operator=(const basic_string &r) {
-		_len = 0;
-		reserve(r._len);
-		_len = r._len;
-		::memcpy(_data, r._data, (_len + 1) * sizeof(T));
+	basic_string &operator=(slice<const T> r) {
+		if (_data == r.data() && _len == r.len()) {
+			// self copy shortcut (a = a)
+			return *this;
+		}
+		if (_cap < r.len()) {
+			if (_data != detail::char_traits<T>::empty_string()) {
+				::free(_data);
+			}
+			_cap = _len = r.len();
+			_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
+			::memcpy(_data, r.data(), _len * sizeof(T));
+			_data[_len] = 0;
+		} else {
+			_len = r.len();
+			::memmove(_data, r.data(), _len * sizeof(T));
+			if (_data != detail::char_traits<T>::empty_string()) {
+				_data[_len] = 0;
+			}
+		}
 		return *this;
 	}
 
+	basic_string &operator=(const basic_string &r) {
+		return operator=(slice<const T>(r.sub()));
+	}
+
 	basic_string &operator=(basic_string &&r) {
-		if (_cap > 0) {
-			free(static_cast<void*>(_data));
+		if (_data != detail::char_traits<T>::empty_string()) {
+			free(_data);
 		}
 		_data = r._data;
 		_len = r._len;
@@ -92,7 +149,7 @@ public:
 
 	void clear() {
 		_len = 0;
-		if (_cap > 0) {
+		if (_data != detail::char_traits<T>::empty_string()) {
 			_data[0] = 0;
 		}
 	}
@@ -101,16 +158,19 @@ public:
 		if (_cap >= n) {
 			return;
 		}
+
 		T *old_data = _data;
-		_data = static_cast<T*>(malloc((n + 1) * sizeof(T)));
+		_cap = n;
+		_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
 		if (_len > 0) {
 			// copy terminating zero as well
 			::memcpy(_data, old_data, (_len + 1) * sizeof(T));
+		} else {
+			_data[0] = 0;
 		}
-		if (_cap > 0) {
-			free(static_cast<void*>(old_data));
+		if (old_data != detail::char_traits<T>::empty_string()) {
+			::free(old_data);
 		}
-		_cap = n;
 	}
 
 	void shrink() {
@@ -125,13 +185,14 @@ public:
 		} else {
 			_data = detail::char_traits<T>::empty_string();
 		}
-		if (_cap > 0) {
-			free(static_cast<void*>(old_data));
-		}
 		_cap = _len;
+		if (old_data != detail::char_traits<T>::empty_string()) {
+			::free(old_data);
+		}
 	}
 
 	void resize(int n) {
+		_ZBS_ASSERT(n >= 0);
 		if (_len == n) {
 			return;
 		}
@@ -148,6 +209,7 @@ public:
 	}
 
 	void resize(int n, T elem) {
+		_ZBS_ASSERT(n >= 0);
 		if (_len == n) {
 			return;
 		}
@@ -166,31 +228,19 @@ public:
 		_data[_len] = 0;
 	}
 
-	void insert_after(int idx, T elem) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (idx == _len - 1) {
-			append(elem);
-		} else {
-			insert_before(idx+1, elem);
+	void insert(int idx, T elem) {
+		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ensure_capacity(1);
+		if (idx < _len) {
+			T *dst = _data + idx;
+			::memmove(dst + 1, dst, (_len - idx) * sizeof(T));
 		}
-	}
-
-	void insert_before(int idx, T elem) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (_len + 1 > _cap) {
-			reserve(_new_size(_len + 1));
-		}
-		T *src = _data + idx;
-		T *dst = src + 1;
-		::memmove(dst, src, (_len - idx) * sizeof(T));
 		_data[idx] = elem;
 		_data[++_len] = 0;
 	}
 
 	void append(T elem) {
-		if (_len + 1 > _cap) {
-			reserve(_new_size(_len + 1));
-		}
+		_ensure_capacity(1);
 		_data[_len++] = elem;
 		_data[_len] = 0;
 	}
@@ -202,53 +252,30 @@ public:
 			return;
 		}
 		T *dst = _data + idx;
-		T *src = dst + 1;
-		::memmove(dst, src, (_len - (idx+1)) * sizeof(T));
+		::memmove(dst, dst+1, (_len - (idx+1)) * sizeof(T));
 		_data[--_len] = 0;
 	}
 
-	void insert_after(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (idx == _len - 1) {
-			append(s);
-		} else {
-			insert_before(idx+1, s);
+	void insert(int idx, slice<const T> s) {
+		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		if (s.len() == 0) {
+			return;
 		}
-	}
-
-	void insert_after(int idx, slice<T> s) {
-		insert_after(idx, slice<const T>(s));
-	}
-
-	void insert_before(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
-		if (_len + s.len() > _cap) {
-			reserve(_new_size(_len + s.len()));
+		if (s.data() >= _data && s.data() < _data + _len) {
+			_self_insert(idx, s);
+			return;
 		}
-		T *src = _data + idx;
-		T *dst = src + s.len();
-		::memmove(dst, src, (_len - idx) * sizeof(T));
-		::memcpy(src, s.data(), s.len() * sizeof(T));
+		_ensure_capacity(s.len());
+		T *dst = _data + idx;
+		::memmove(dst + s.len(), dst, (_len - idx) * sizeof(T));
+		::memcpy(dst, s.data(), s.len() * sizeof(T));
 		_len += s.len();
 		_data[_len] = 0;
 
-	}
-
-	void insert_before(int idx, slice<T> s) {
-		insert_before(idx, slice<const T>(s));
 	}
 
 	void append(slice<const T> s) {
-		if (_len + s.len() > _cap) {
-			reserve(_new_size(_len + s.len()));
-		}
-		::memcpy(_data + _len, s.data(), s.len() * sizeof(T));
-		_len += s.len();
-		_data[_len] = 0;
-	}
-
-	void append(slice<T> s) {
-		append(slice<const T>(s));
+		insert(_len, s);
 	}
 
 	void remove(int begin, int end) {
@@ -315,7 +342,9 @@ public:
 	string &operator=(string&&) = default;
 
 public:
+	string(slice<const char> r);
 	string(const char *cstr);
+	string &operator=(slice<const char> r);
 	string &operator=(const char *cstr);
 	char &operator[](int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
