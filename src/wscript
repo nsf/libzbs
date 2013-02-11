@@ -1,0 +1,7 @@
+def build(bld):
+	lib_sources = bld.path.ant_glob("*.cc")
+	bld.shlib(
+		source = lib_sources,
+		target = 'zbs',
+		includes = '..',
+	)
