@@ -180,11 +180,11 @@ public:
 	/// Replaces the contents of the vector with a copy of the contents of
 	/// the slice `r`.
 	vector &operator=(slice<const T> r) {
-		if (r.data() == _data) {
+		if (_data == r.data() && _len == r.len()) {
 			// self copy shortcut (a = a)
 			return *this;
 		}
-		if (r.len() > _cap) {
+		if (_cap < r.len()) {
 			// slice is bigger than we are, realloc needed, also it
 			// means slice cannot point to ourselves and it is save
 			// to destroy ourselves
