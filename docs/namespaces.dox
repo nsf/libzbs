@@ -1,0 +1,7 @@
+/*!
+@namespace zbs
+@brief The main namespace of the library.
+
+@namespace zbs::slices
+@brief Various generic slice utility functions.
+*/

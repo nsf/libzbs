@@ -1,0 +1,13 @@
+def docs(bld):
+	bld(
+		features = 'subst',
+		source = 'Doxyfile.in',
+		target = 'Doxyfile',
+		encoding = 'utf-8',
+		APPNAME = bld.env.APPNAME,
+		VERSION = bld.env.VERSION,
+	)
+	bld(
+		features = 'doxygen',
+		doxyfile = 'Doxyfile',
+	)

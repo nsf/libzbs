@@ -1,0 +1,33 @@
+/*!
+@mainpage Main Page
+
+@tableofcontents
+
+@section intro_sec Introduction
+
+LibZBS was written as an alternative to existing general purpose C++
+libraries. It contains all the features you need to do basic day-to-day
+development, starting from I/O and formatting utilities and ending with
+networking support. Even though internally libzbs uses STL to implement some
+of the features, STL is not an API dependency, you'll not see interfaces that
+require you to use std::string for example.
+
+TODO: better intro.
+
+@subsection userdoc_sec User Documentation
+
+If your intention is to use a library to build your software, this is the
+section you're looking for.
+
+ - <a class="el" href="annotated.html">API</a>
+ - @ref exceptions
+
+@subsection devdoc_sec Developer Documentation
+
+If your intention is to contribute to the libzbs project, please make yourself
+familiar with information in this section.
+
+ - @ref conventions
+ - @ref exceptions
+
+*/

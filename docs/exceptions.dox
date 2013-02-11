@@ -1,0 +1,38 @@
+/*!
+@page exceptions Exception Safety
+
+When you're making a library that is supposed to be a standard library
+replacement you have to raise exception-safety guarantees issue. And here I
+want to put the summary of our thoughts on that topic.
+
+The usage of exceptions is viral. There are different kinds of this property
+(being viral). For example if we take garbage collectors, the APIs designed
+for garbage collected enviornments simply cannot be used in manual memory
+management environments. However the vice versa is not true, you still can use
+manual memory management APIs in GCed environment. The situation with
+exceptions is similar. You can use explicit error handling APIs in an
+environment with exceptions, but not vice versa. That's a very strong argument
+against the usage of exceptions in the public API of our library.
+
+Some generic parts of the library require us to think about exception-safety
+guarantees. Subjective observations show that it's very hard to write even
+minimally exception-safe code (which provides basic exception-safety
+guarantees). In projects like libcxx you can see late commits which fix
+various exception-safety problems. If C++ experts make mistakes in that area,
+mere mortals are doomed to make mistakes. Explicit error handling doesn't
+introduce that kind of problem. But it doesn't mean that writing
+exception-safe code is always hard, in our opinion it's a C++ specific issue.
+In particular, languages with garbage collection are much more
+exception-safety friendly in that respect.
+
+And the last complaint we often heard about exceptions is that it's the only
+C++ feature that breaks "you don't pay for what you don't use" rule. Yes there
+is some overhead, but often it's extremely insignificant. However we can't
+leave that argument out, which goes against the usage of exceptions too.
+
+Having all that in mind we decided to forbid the usage of exceptions and the
+policy is to provide **no exception-safety guarantees**. After all our target
+is pragmatic, reusable and maintainable code. The lack of exceptions and the
+lack of exception-safety guarantees makes things much easier.
+
+*/

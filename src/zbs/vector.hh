@@ -11,27 +11,21 @@
 
 namespace zbs {
 
-// A typical std::vector clone, but as you may have noticed, it has no
-// customizable allocator. The reason for this is the following. From what I've
-// seen the purpose of having a custom allocator is performance considerations
-// and/or memory fragmentation/alignment issues. Surprisingly enough we may
-// discover papers like the one about EASTL which quickly conclude that STL
-// allocators have a lot of weak points and it makes them useless in hardware
-// environments like gaming console. Today (early 2013) it seems that future
-// hardware will move towards amd64 (aka x86_64) architecture with virtual
-// memory and such. By rumors future Sony console will use AMD fusion
-// processors for example. And even today having Intel Ivy Bridge CPU you can
-// see how better this hardware is compared to other CPUs on the market. Memory
-// becomes really cheap too. Having all that and things I haven't mentioned in
-// mind the idea is that 98% of users will not use custom allocators because
-// they don't care. The rest 2% are free to implement their own containers, and
-// that's what most likely they do already anyway.
-//
-// vector does not provide exception-safety guarantees
-
-//============================================================================
-// vector template
-//============================================================================
+/// Container template, provides support for dynamically growing arrays.
+///
+/// It's safe to assume that elements are stored sequentially in memory, thus
+/// it is possible to interact with pointer-based array APIs.
+///
+/// The amount of memory vector allocates is usually more than it is required
+/// to hold all the elements. It's done that way for a purpose of handling
+/// future element growth. The total amount of elements the vector may hold
+/// without performing reallocations can be queried using the cap() method. If
+/// you need to return all extra memory to the system, just call the shrink()
+/// method.
+///
+/// @headerfile zbs/vector.hh
+///
+/// TODO(nsf): better description here
 template <typename T>
 class vector {
 	T *_data;
@@ -118,18 +112,25 @@ class vector {
 	}
 
 public:
+	/// Default constructor. Constructs an empty vector.
 	vector(): _data(nullptr), _len(0), _cap(0) {}
 
+	/// Uses a copy of the contents of the initializer list to construct a
+	/// vector.
 	vector(std::initializer_list<T> r): vector(slice<const T>(r)) {}
 
+	/// Copy constructor. Constructs a vector with a copy of the contents
+	/// of `r`.
 	vector(const vector &r): vector(slice<const T>(r)) {}
 
+	/// Move constructor. Uses the contents of `r` to construct a vector.
 	vector(vector &&r): _data(r._data), _len(r._len), _cap(r._cap) {
 		r._data = nullptr;
 		r._len = 0;
 		r._cap = 0;
 	}
 
+	/// Uses a copy of the contents of the slice `r` to construct a vector.
 	vector(slice<const T> r): _data(nullptr), _len(r.len()), _cap(r.len()) {
 		if (_len == 0) {
 			return;
@@ -140,8 +141,10 @@ public:
 		}
 	}
 
+	/// Uses a copy of the contents of the slice `r` to construct a vector.
 	vector(slice<T> r): vector(slice<const T>(r)) {}
 
+	/// Constructs a vector with `n` default-constructed values.
 	explicit vector(int n): _data(nullptr), _len(n), _cap(n) {
 		_ZBS_ASSERT(n >= 0);
 		if (_len == 0) {
@@ -153,6 +156,8 @@ public:
 		}
 	}
 
+	/// Constructs a vector with `n` copy-constructed values using `elem`
+	/// as a prototype.
 	vector(int n, const T &elem): _data(nullptr), _len(n), _cap(n) {
 		_ZBS_ASSERT(n >= 0);
 		if (_len == 0) {
@@ -164,6 +169,7 @@ public:
 		}
 	}
 
+	/// Destruct all the elements of the vector and deallocate used storage.
 	~vector() {
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
@@ -171,6 +177,8 @@ public:
 		free(_data);
 	}
 
+	/// Replaces the contents of the vector with a copy of the contents of
+	/// the slice `r`.
 	vector &operator=(slice<const T> r) {
 		if (r.data() == _data) {
 			// self copy shortcut (a = a)
@@ -205,18 +213,26 @@ public:
 		return *this;
 	}
 
+	/// Replaces the contents of the vector with a copy of the contents of
+	/// the slice `r`.
 	vector &operator=(slice<T> r) {
 		return operator=(slice<const T>(r));
 	}
 
+	/// Replaces the contents of the vector with a copy of the contents of
+	/// the initializer list `r`.
 	vector &operator=(std::initializer_list<T> r) {
 		return operator=(slice<const T>(r));
 	}
 
+	/// Replaces the contents of the vector with a copy of the contents of
+	/// the vector `r`.
 	vector &operator=(const vector &r) {
 		return operator=(slice<const T>(r));
 	}
 
+	/// Replaces the contents of the vector with the contents of the vector
+	/// `r`.
 	vector &operator=(vector &&r) {
 		if (&r == this) {
 			return *this;
@@ -234,11 +250,23 @@ public:
 		return *this;
 	}
 
+	/// Returns an amount of active elements the vector holds at a given
+	/// moment.
 	inline int len() const { return _len; }
+
+	/// Returns an amount of elements the vector may hold without
+	/// performing reallocations.
 	inline int cap() const { return _cap; }
+
+	/// Returns a pointer to the first element in the vector.
 	inline T *data() { return _data; }
+
+	/// Returns a pointer to the first element in the vector.
 	inline const T *data() const { return _data; }
 
+	/// Clears the vector by deconstructing all of its elements.
+	///
+	/// Doesn't reallocate or release memory, but the len() is set to zero.
 	void clear() {
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
@@ -246,6 +274,14 @@ public:
 		_len = 0;
 	}
 
+	/// Makes sure there is enough place to hold `n` elements.
+	///
+	/// The function will reallocate the vector if the current cap() is
+	/// less that what was requested. Negative requests are ignored.
+	///
+	/// Reallocation is not a cheap operation and if you want to fill a
+	/// vector with a known (even if approximately) amount of values, use
+	/// this method for that purpose.
 	void reserve(int n) {
 		if (_cap >= n) {
 			return;
@@ -261,6 +297,9 @@ public:
 		free(old_data);
 	}
 
+	/// Releases unused memory to the system.
+	///
+	/// If the cap() != len(), it will reallocate the vector so that cap() == len().
 	void shrink() {
 		if (_cap == _len) {
 			return;
@@ -280,6 +319,13 @@ public:
 		free(old_data);
 	}
 
+	/// Resizes the vector to contain `n` elements.
+	///
+	/// If `n` is greater than len(), additional elements are appended and
+	/// default-constructed.
+	///
+	/// If `n` is less than len(), the vector is reduced to first `n`
+	/// elements.
 	void resize(int n) {
 		_ZBS_ASSERT(n >= 0);
 		if (_len == n) {
@@ -301,6 +347,13 @@ public:
 		_len = n;
 	}
 
+	/// Resizes the vector to contain `n` elements.
+	///
+	/// If `n` is greater than len(), additional elements are appended and
+	/// copy-constructed using `elem` as a prototype.
+	///
+	/// If `n` is less than len(), the vector is reduced to first `n`
+	/// elements.
 	void resize(int n, const T &elem) {
 		// copy & paste from resize(int)
 		_ZBS_ASSERT(n >= 0);
@@ -323,6 +376,12 @@ public:
 		_len = n;
 	}
 
+	/// Constructs a new element in the specified position.
+	///
+	/// The name is an abbreviation for placement insert. It uses C++11
+	/// variadic templates and perfect forwarding features to construct a
+	/// new element in a given place `idx`. If `idx` == len(), then the
+	/// element is simply appended.
 	template <typename ...Args>
 	inline void pinsert(int idx, Args &&...args) {
 		_ZBS_BOUNDS_CHECK(idx, _len+1);
@@ -334,6 +393,11 @@ public:
 		_len++;
 	}
 
+	/// Constructs a new element in-place at the end of the vector.
+	///
+	/// The name is an abbreviation for placement append. It uses C++11
+	/// variadic templates and perfect forwarding features to construct a
+	/// new element at the end of the vector.
 	template <typename ...Args>
 	inline void pappend(Args &&...args) {
 		_ensure_capacity(1);
@@ -341,6 +405,7 @@ public:
 		_len++;
 	}
 
+	/// Removes an element at the specified position `idx`.
 	inline void remove(int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		if (idx == _len - 1) {
@@ -354,6 +419,11 @@ public:
 		_len--;
 	}
 
+	/// Inserts a copy of the elements from the slice `s` at the specified
+	/// position `idx`.
+	///
+	/// It is safe to use a slice of the vector itself to perform the
+	/// insertion.
 	inline void insert(int idx, slice<const T> s) {
 		_ZBS_BOUNDS_CHECK(idx, _len+1);
 		if (s.len() == 0) {
@@ -374,26 +444,39 @@ public:
 		_len += s.len();
 	}
 
+	/// Inserts a copy of the element `elem` at the specified position
+	/// `idx`.
 	inline void insert(int idx, const T &elem) {
 		pinsert(idx, elem);
 	}
 
+	/// Inserts the element `elem` at the specified position `idx`.
 	inline void insert(int idx, T &&elem) {
 		pinsert(idx, elem);
 	}
 
+	/// Appends a copy of the elements from the slice `s` to the end of the
+	/// vector.
 	inline void append(slice<const T> s) {
 		insert(_len, s);
 	}
 
+	/// Appends a copy of the element `elem` to the end of the vector.
 	inline void append(const T &elem) {
 		pappend(elem);
 	}
 
+	/// Appends the element `elem` to the end of the vector.
 	inline void append(T &&elem) {
 		pappend(elem);
 	}
 
+	/// Removes the slice [`begin`, `end`) of elements from the vector.
+	///
+	/// All elements between `begin` (inclusive) and `end` (exclusive) are
+	/// deconstructed. It's easier to remember the meaning of parameters if
+	/// you realize that the amount of removed elements equals to
+	/// (`end` - `begin`).
 	inline void remove(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
@@ -411,15 +494,18 @@ public:
 		_len -= len;
 	}
 
+	/// Returns the slice [0, len()) of the vector.
 	inline slice<T> sub() {
 		return {_data, _len};
 	}
 
+	/// Returns the slice [`begin`, len()) of the vector.
 	inline slice<T> sub(int begin) {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
+	/// Returns the slice [`begin`, `end`) of the vector.
 	inline slice<T> sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
@@ -427,15 +513,18 @@ public:
 		return {_data + begin, end - begin};
 	}
 
+	/// Returns the slice [0, len()) of the vector.
 	inline slice<const T> sub() const {
 		return {_data, _len};
 	}
 
+	/// Returns the slice [`begin`, len()) of the vector.
 	inline slice<const T> sub(int begin) const {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
+	/// Returns the slice [`begin`, `end`) of the vector.
 	inline slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
@@ -443,17 +532,22 @@ public:
 		return {_data + begin, end - begin};
 	}
 
+	/// Typical element access operator.
 	inline T &operator[](int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
+	/// Typical element access operator.
 	inline const T &operator[](int idx) const {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
+	/// Vector to slice implicit conversion operator.
 	inline operator slice<T>() { return {_data, _len}; }
+
+	/// Vector to slice implicit conversion operator.
 	inline operator slice<const T>() const { return {_data, _len}; }
 };
 

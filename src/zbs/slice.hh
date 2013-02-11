@@ -51,6 +51,20 @@ private:
 // slice template
 //============================================================================
 
+/// Reference to a contiguous segment of an array.
+///
+/// Slice is one of the fundamental concepts in the libzbs. You can think of it
+/// as a safe pointer to a segment of an array. Not only it contains a pointer
+/// to the first element, it also keeps the length of that segment. Using
+/// slices everywhere is a very convenient way to avoid various kinds of buffer
+/// overflow bugs.
+///
+/// Slice explicitly doesn't have any kind of memory ownership semantics, it's
+/// up to you to keep an eye on who's the owner of the memory and when it goes
+/// away. In that regard it's as safe as an ordinary pointer. On the other hand
+/// using slice we can unify access to all sorts of seqential structures, be it
+/// a temporary C array on the stack, or a zbs::vector, or a zbs::string, or
+/// even an initalizer list.
 template <typename T>
 class slice {
 	T *_data;
@@ -110,6 +124,8 @@ public:
 //
 // it has an additional copy constructor from non-const slice<T>
 //============================================================================
+
+/// Slice template specialization for `const T`.
 template <typename T>
 class slice<const T> {
 	_common_slice_part_const(T);

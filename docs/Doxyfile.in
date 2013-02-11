@@ -1,0 +1,15 @@
+PROJECT_NAME = @APPNAME@
+PROJECT_NUMBER = @VERSION@
+PROJECT_BRIEF  = "Experimental C++11 cross-platform software utility library"
+OUTPUT_DIRECTORY = docs/output
+INLINE_INHERITED_MEMB = YES
+JAVADOC_AUTOBRIEF = YES
+TAB_SIZE = 8
+ALIASES = "cppforeach=Provides support for C++11 range-based for loop."
+SHOW_USED_FILES = NO
+FILE_PATTERNS = *.cc *.hh *.dox
+INPUT = . ../src ../src/zbs
+QUIET = YES
+WARN_IF_UNDOCUMENTED = NO
+GENERATE_HTML = YES
+GENERATE_LATEX = NO
