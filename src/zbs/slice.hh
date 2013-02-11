@@ -271,4 +271,22 @@ int copy(slice<T> dst, slice<U> src) {
 	return detail::copier<T, U, is_pod>::copy(dst, src);
 }
 
+/// @addtogroup cpp_helpers
+/// @{
+
+/// @cppforeach
+template <typename T>
+const T *begin(slice<const T> &s) { return s.data(); }
+/// @cppforeach
+template <typename T>
+const T *end(slice<const T> &s) { return s.data()+s.len(); }
+/// @cppforeach
+template <typename T>
+T *begin(slice<T> &s) { return s.data(); }
+/// @cppforeach
+template <typename T>
+T *end(slice<T> &s) { return s.data()+s.len(); }
+
+/// @}
+
 } // namespace zbs

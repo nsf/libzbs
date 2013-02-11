@@ -551,4 +551,22 @@ public:
 	inline operator slice<const T>() const { return {_data, _len}; }
 };
 
+/// @addtogroup cpp_helpers
+/// @{
+
+/// @cppforeach
+template <typename T>
+const T *begin(const vector<T> &v) { return v.data(); }
+/// @cppforeach
+template <typename T>
+const T *end(const vector<T> &v) { return v.data()+v.len(); }
+/// @cppforeach
+template <typename T>
+T *begin(vector<T> &v) { return v.data(); }
+/// @cppforeach
+template <typename T>
+T *end(vector<T> &v) { return v.data()+v.len(); }
+
+/// @}
+
 } // namespace zbs
