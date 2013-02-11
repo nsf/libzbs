@@ -1,3 +1,4 @@
-# waf internals
+# waf specific
 .lock-waf*
 .waf*
+/build
