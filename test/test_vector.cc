@@ -150,6 +150,10 @@ STF_TEST("vector::operator=(slice<const T>)") {
 	zbs::vector<int> a = {3, 4, 9};
 	a = a.sub(1, 2);
 	STF_ASSERT(check_vector(a, {4}));
+
+	zbs::vector<int> b = {7, 20, 40, -1};
+	b = b.sub(0, 2);
+	STF_ASSERT(check_vector(b, {7, 20}));
 }
 
 STF_TEST("vector::operator=(slice<const T>) [oop]") {

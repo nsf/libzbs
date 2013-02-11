@@ -3,6 +3,8 @@
 #include "zbs/string.hh"
 #include "zbs/vector.hh"
 
+STF_SUITE_NAME("zbs/slice");
+
 STF_TEST("slice copy") {
 	{
 		zbs::string a = "hello";
