@@ -50,11 +50,11 @@ public:
 	}
 
 	oop() { default_ctors++; balance++; }
-	oop(const oop &r) { copy_ctors++; balance++; }
-	oop(oop &&r) { move_ctors++; balance++; }
+	oop(const oop&) { copy_ctors++; balance++; }
+	oop(oop&&) { move_ctors++; balance++; }
 	~oop() { dtors++; balance--; }
-	oop &operator=(const oop &r) { copy_ops++; return *this; }
-	oop &operator=(oop &&r) { move_ops++; return *this; }
+	oop &operator=(const oop&) { copy_ops++; return *this; }
+	oop &operator=(oop&&) { move_ops++; return *this; }
 };
 
 int oop::balance = 0;

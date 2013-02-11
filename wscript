@@ -15,7 +15,7 @@ def configure(conf):
 	conf.load('waf_unit_test')
 	conf.load('compiler_cxx')
 	conf.load('doxygen')
-	conf.env.append_unique('CXXFLAGS', '-std=c++11')
+	conf.env.append_unique('CXXFLAGS', ['-std=c++11', '-Wall', '-Wextra', '-Werror'])
 	# config headers?
 
 	conf.define('ZBS_ENABLE_ASSERT', 1)

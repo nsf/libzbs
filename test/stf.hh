@@ -14,9 +14,9 @@
 #define _MCC(a, b) _CC(a, b)
 
 #define STF_TEST(name)										\
-static void _MCC(_test_func_, __LINE__)(stf::runner&, stf::test&);				\
+static void _MCC(_test_func_, __LINE__)(stf::test&);						\
 static stf::test _MCC(_test_, __LINE__)(_stf_runner, name, _MCC(_test_func_, __LINE__));	\
-static void _MCC(_test_func_, __LINE__)(stf::runner &__R, stf::test &__T)
+static void _MCC(_test_func_, __LINE__)(stf::test &__T)
 
 #define STF_SUITE_NAME(name)									\
 static stf::name_setter _MCC(_name_setter_, __LINE__)(_stf_runner, name);
@@ -42,7 +42,7 @@ namespace stf {
 struct runner;
 struct test;
 
-typedef void (*functype)(runner&, test&);
+typedef void (*functype)(test&);
 
 struct test {
 	std::string name = "<unnamed>";
@@ -108,11 +108,10 @@ struct runner {
 	}
 
 	int run() {
-		runner &__R = *this; // for macros
 		auto start = std::chrono::system_clock::now();
 		for (auto &t: tests) {
 			logf("%s... ", t.name.c_str());
-			(*t.func)(*this, t);
+			(*t.func)(t);
 			if (t.status) {
 				logf("PASS\n");
 			} else {

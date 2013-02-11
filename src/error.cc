@@ -13,7 +13,7 @@ error_code error::code() const {
 	return _code;
 }
 
-void error::set(error_code code, const char *format, ...) {
+void error::set(error_code code, const char*, ...) {
 	_code = code;
 }
 
@@ -32,7 +32,7 @@ error_code generic_error_code(generic_error_domain, 1);
 // abort_error
 //============================================================================
 
-void abort_error_t::set(error_code code, const char *format, ...) {
+void abort_error_t::set(error_code, const char *format, ...) {
 	fprintf(stderr, "abort: ");
 	va_list vl;
 	va_start(vl, format);
