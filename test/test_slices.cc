@@ -77,3 +77,25 @@ STF_TEST("slices::contains(slice<T>, slice<U>)") {
 		STF_ASSERT(slices::contains(test.str.sub(), test.substr.sub()) == test.expected);
 	}
 }
+
+STF_TEST("slices::count(slice<T>, slice<U>)") {
+	struct count_test {
+		string str;
+		string sep;
+		int count;
+	};
+	vector<count_test> count_tests = {
+		{";;1;;2;3;;4;5;6;7;;", ";;", 4},
+		{"1,2,3,4,5,6,7", ".", 0},
+		{"1,2,,2,7,f,s,b,w,,qw", ",", 10},
+		{"756", "756789", 0},
+		{"", "1", 0},
+		// TODO: add cases where sep == ""
+	};
+	for (const auto &test : count_tests) {
+		STF_PRINTF("%d (%d) %s %s", test.count,
+			slices::count(test.str.sub(), test.sep.sub()),
+			test.str.c_str(), test.sep.c_str());
+		STF_ASSERT(slices::count(test.str.sub(), test.sep.sub()) == test.count);
+	}
+}

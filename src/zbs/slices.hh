@@ -22,7 +22,10 @@ int index(slice<T> s, slice<U> subs) {
 	if (n == 0) {
 		return 0;
 	}
-	const U c = subs[0];
+	if (n > s.len()) {
+		return -1;
+	}
+	const T &c = subs[0];
 	if (n == 1) {
 		for (int i = 0; i < s.len(); i++) {
 			if (s[i] == c) {
@@ -59,6 +62,34 @@ void reverse(slice<T> s) {
 	for (int i = 0; i < mid; i++) {
 		std::swap(s[i], s[lenm1-i]);
 	}
+}
+
+/// Returns the number of non-overlapping instances of the slice `sep` in the
+/// slice `s`.
+///
+/// Template parameters must have the same type disregarding `const` qualifier.
+template <typename T, typename U>
+int count(slice<T> s, slice<U> sep) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	const int n = sep.len();
+	if (n == 0) {
+		// TODO: return rune count + 1 here
+		return 0;
+	}
+	if (n > s.len()) {
+		return 0;
+	}
+	int count = 0;
+	const T &c = sep[0];
+	for (int i = 0; i+n <= s.len(); ) {
+		if (s[i] == c && s.sub(i, i+n) == sep) {
+			count++;
+			i += n;
+			continue;
+		}
+		i++;
+	}
+	return count;
 }
 
 }} // namespace zbs::slices
