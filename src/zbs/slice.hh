@@ -7,11 +7,10 @@
 
 namespace zbs {
 
-//============================================================================
-// slice template helper macro
-//============================================================================
 
-// for const T
+// slice template helper macro, however we unwrap it manually in the `const T`
+// slice specialization for documentation purposes, keep that in mind if you're
+// editing it
 #define _common_slice_part_const(T)					\
 private:								\
 	const T *_data;							\
@@ -25,7 +24,7 @@ public:									\
 	slice(const slice<T> &r): _data(r.data()), _len(r.len()) {}	\
 	slice(const slice &r) = default;				\
 	slice &operator=(const slice &r) = default;			\
-	explicit operator bool() const { return _data != nullptr; }     \
+	explicit operator bool() const { return _len != 0; }            \
 	int len() const { return _len; }				\
 	const T *data() const { return _data; }				\
 	slice<const T> sub() const {					\
@@ -47,10 +46,6 @@ public:									\
 	}								\
 private:
 
-//============================================================================
-// slice template
-//============================================================================
-
 /// Reference to a contiguous segment of an array.
 ///
 /// Slice is one of the fundamental concepts in the libzbs. You can think of it
@@ -71,46 +66,81 @@ class slice {
 	int _len;
 
 public:
-	slice(): _data(nullptr), _len(0) {}
-	slice(T *data, int len): _data(data), _len(len) {}
-	slice(const slice &r) = default;
-	slice &operator=(const slice &r) = default;
-	explicit operator bool() const { return _data != nullptr; }
 
+	/// Default constructor. Constructs an empty slice.
+	///
+	/// Technically a null slice and an empty slice are semantically
+	/// equivalent, because you can't do anything useful with slice's data
+	/// if its length is zero.
+	slice(): _data(nullptr), _len(0) {}
+
+	/// Constructs a slice using raw data pointer and a length.
+	/// @unsafe
+	slice(T *data, int len): _data(data), _len(len) {}
+
+	/// Copy constructor. Constructs a slice using the data pointer and the
+	/// length from the slice `r`.
+	slice(const slice &r) = default;
+
+	/// Replaces the contents of the slice with the data pointer and the
+	/// length from the slice `r`.
+	slice &operator=(const slice &r) = default;
+
+	/// Checks if the slice is empty or not.
+	explicit operator bool() const { return _len != 0; }
+
+	/// Typical element access operator.
 	T &operator[](int idx) {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
+	/// Typical element access operator.
 	const T &operator[](int idx) const {
 		_ZBS_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
+	/// Returns the length of the slice.
 	int len() const { return _len; }
+
+	/// Returns a pointer to the first element of the slice.
 	T *data() { return _data; }
+
+	/// Returns a pointer to the first element of the slice.
 	const T *data() const { return _data; }
 
+	/// Returns the subslice [0, len()) of the slice.
 	slice sub() {
 		return {_data, _len};
 	}
+
+	/// Returns the subslice [`begin`, len()) of the slice.
 	slice sub(int begin) {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
+
+	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		_ZBS_BOUNDS_CHECK(end, _len+1);
 		return {_data + begin, end - begin};
 	}
+
+	/// Returns the subslice [0, len()) of the slice.
 	slice<const T> sub() const {
 		return {_data, _len};
 	}
+
+	/// Returns the subslice [`begin`, len()) of the slice.
 	slice<const T> sub(int begin) const {
 		_ZBS_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
+
+	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_BOUNDS_CHECK(begin, _len);
@@ -119,16 +149,92 @@ public:
 	}
 };
 
-//============================================================================
-// const slice template specialization
-//
-// it has an additional copy constructor from non-const slice<T>
-//============================================================================
-
 /// Slice template specialization for `const T`.
+/// @sa slice
 template <typename T>
 class slice<const T> {
-	_common_slice_part_const(T);
+private:
+	const T *_data;
+	int _len;
+
+public:
+	/// @copydoc slice::slice()
+	slice(): _data(nullptr), _len(0) {}
+
+	/// Constructs a slice using std::initializer_list.
+	///
+	/// This function is only available for `const T` specialization of the
+	/// slice for obvious reasons: std::initializer_list represents a const
+	/// C array.
+	///
+	/// @warning However, never use this constructor to create a slice
+	/// object on the stack like that:
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cc}
+	/// zbs::slice<const int> = { 1, 2, 3, 4, 5 };
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	/// It's supposed to be used only as a syntax sugar for creating
+	/// temporary slices, e.g.:
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cc}
+	/// if (zbs::bytes::starts_with(slice, {'\xFF', '\xFE'})) {}
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	/// Perhaps it's not dangerious to do so with POD types, but when it
+	/// comes to non-POD types, the std::initializer_list will be destroyed
+	/// (destroying its elements as well) immediately after construction of
+	/// a slice object is finished. And as a result the newly created slice
+	/// contains a pointer to destroyed invalid data.
+	///
+	/// @warning We have this constructor solely for the purpose of
+	/// allowing the usage of std::initializer_list in all the functions
+	/// which take slice<const T> as an argument.
+	slice(std::initializer_list<T> r):
+		_data(r.begin()), _len(r.size()) {}
+
+	/// @copydoc slice::slice(T*, int)
+	slice(const T *data, int len): _data(data), _len(len) {}
+
+	/// Constructs a slice using a copy of the non-const slice `r` of the
+	/// same type.
+	slice(const slice<T> &r): _data(r.data()), _len(r.len()) {}
+
+	/// @copydoc slice::slice(const slice&)
+	slice(const slice &r) = default;
+
+	/// @copydoc slice::operator=(const slice&)
+	slice &operator=(const slice &r) = default;
+
+	/// @copydoc slice::operator bool() const
+	explicit operator bool() const { return _len != 0; }
+
+	/// @copydoc slice::len()
+	int len() const { return _len; }
+
+	/// @copydoc slice::data() const
+	const T *data() const { return _data; }
+
+	/// @copydoc slice::sub() const
+	slice<const T> sub() const {
+		return {_data, _len};
+	}
+
+	/// @copydoc slice::sub(int) const
+	slice<const T> sub(int begin) const {
+		_ZBS_BOUNDS_CHECK(begin, _len);
+		return {_data + begin, _len - begin};
+	}
+
+	/// @copydoc slice::sub(int, int) const
+	slice<const T> sub(int begin, int end) const {
+		_ZBS_ASSERT(begin < end);
+		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_BOUNDS_CHECK(end, _len+1);
+		return {_data + begin, end - begin};
+	}
+
+	/// @copydoc slice::operator[](int) const
+	const T &operator[](int idx) const {
+		_ZBS_BOUNDS_CHECK(idx, _len);
+		return _data[idx];
+	}
 };
 
 //============================================================================
@@ -146,33 +252,47 @@ class slice<const T> {
 // compilers properly anyway. Therefore adding constexpr isn't worth it.
 //============================================================================
 
+/// Slice template specialization for `const char`. It contains everything
+/// slice<const T> has, plus a specialized constructor for `const char*` type.
+/// @sa slice<const T>
 template <>
 class slice<const char> {
-	_common_slice_part_const(char)
 public:
+	/// Constructs a slice using the null-terminated C string `str`.
 	slice(const char *str): _data(str), _len(::strlen(str)) {}
+	_common_slice_part_const(char)
 };
 
-// For char16_t and char32_t there is no other choice than relying on good
-// constexpr optimizations.
+/// Slice template specialization for `const char16_t`. It contains everything
+/// slice<const T> has, plus a specialized constructor for `const char16_t*`
+/// type.
+/// @sa slice<const T>
 template <>
 class slice<const char16_t> {
-	_common_slice_part_const(char16_t)
 	static constexpr int _strlen16(const char16_t *s) {
 		return *s ? (1 + _strlen16(s+1)) : 0;
 	}
 public:
+	/// Constructs a slice using the null-terminated UTF-16 C++ string
+	/// `str`.
 	constexpr slice(const char16_t *str): _data(str), _len(_strlen16(str)) {}
+	_common_slice_part_const(char16_t)
 };
 
+/// Slice template specialization for `const char32_t`. It contains everything
+/// slice<const T> has, plus a specialized constructor for `const char32_t*`
+/// type.
+/// @sa slice<const T>
 template <>
 class slice<const char32_t> {
-	_common_slice_part_const(char32_t)
 	static constexpr int _strlen32(const char32_t *s) {
 		return *s ? (1 + _strlen32(s+1)) : 0;
 	}
 public:
+	/// Constructs a slice using the null-terminated UTF-32 C++ string
+	/// `str`.
 	constexpr slice(const char32_t *str): _data(str), _len(_strlen32(str)) {}
+	_common_slice_part_const(char32_t)
 };
 
 #undef _common_slice_part_const
@@ -265,28 +385,27 @@ struct copier<T, U, true> {
 
 } // namespace zbs::detail
 
+/// Copy the slice `src` to the slice `dst`. Function copies the
+/// `min(dst.len(), src.len())` elements and returns the number of elements
+/// copied. It's is safe to use this function for overlapping slices.
+/// @relates zbs::slice
 template <typename T, typename U, bool is_pod = std::is_pod<T>::value>
 int copy(slice<T> dst, slice<U> src) {
 	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
 	return detail::copier<T, U, is_pod>::copy(dst, src);
 }
 
-/// @addtogroup cpp_helpers
-/// @{
-
-/// @cppforeach
+/// @cppforeach @relates zbs::slice
 template <typename T>
-const T *begin(slice<const T> &s) { return s.data(); }
-/// @cppforeach
+const T *begin(slice<const T> s) { return s.data(); }
+/// @cppforeach @relates zbs::slice
 template <typename T>
-const T *end(slice<const T> &s) { return s.data()+s.len(); }
-/// @cppforeach
+const T *end(slice<const T> s) { return s.data()+s.len(); }
+/// @cppforeach @relates zbs::slice
 template <typename T>
-T *begin(slice<T> &s) { return s.data(); }
-/// @cppforeach
+T *begin(slice<T> s) { return s.data(); }
+/// @cppforeach @relates zbs::slice
 template <typename T>
-T *end(slice<T> &s) { return s.data()+s.len(); }
-
-/// @}
+T *end(slice<T> s) { return s.data()+s.len(); }
 
 } // namespace zbs

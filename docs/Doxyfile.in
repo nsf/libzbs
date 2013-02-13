@@ -6,6 +6,7 @@ INLINE_INHERITED_MEMB = YES
 JAVADOC_AUTOBRIEF = YES
 TAB_SIZE = 8
 ALIASES = "cppforeach=Provides support for C++11 range-based for loop."
+ALIASES += "unsafe=@warning This function is unsafe and its usage is dicouraged."
 SHOW_USED_FILES = NO
 FILE_PATTERNS = *.cc *.hh *.dox
 INPUT = . ../src ../src/zbs
