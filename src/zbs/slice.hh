@@ -31,17 +31,17 @@ public:									\
 		return {_data, _len};					\
 	}								\
 	slice<const T> sub(int begin) const {				\
-		_ZBS_BOUNDS_CHECK(begin, _len);				\
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);			\
 		return {_data + begin, _len - begin};			\
 	}								\
 	slice<const T> sub(int begin, int end) const {			\
-		_ZBS_ASSERT(begin < end);				\
-		_ZBS_BOUNDS_CHECK(begin, _len);				\
-		_ZBS_BOUNDS_CHECK(end, _len+1);				\
+		_ZBS_ASSERT(begin <= end);				\
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);			\
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);			\
 		return {_data + begin, end - begin};			\
 	}								\
 	const T &operator[](int idx) const {				\
-		_ZBS_BOUNDS_CHECK(idx, _len);				\
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);			\
 		return _data[idx];					\
 	}								\
 private:
@@ -91,13 +91,13 @@ public:
 
 	/// Typical element access operator.
 	T &operator[](int idx) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
 	/// Typical element access operator.
 	const T &operator[](int idx) const {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
@@ -117,15 +117,15 @@ public:
 
 	/// Returns the subslice [`begin`, len()) of the slice.
 	slice sub(int begin) {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 
@@ -136,15 +136,15 @@ public:
 
 	/// Returns the subslice [`begin`, len()) of the slice.
 	slice<const T> sub(int begin) const {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 };
@@ -218,21 +218,21 @@ public:
 
 	/// @copydoc slice::sub(int) const
 	slice<const T> sub(int begin) const {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	/// @copydoc slice::sub(int, int) const
 	slice<const T> sub(int begin, int end) const {
-		_ZBS_ASSERT(begin < end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_ASSERT(begin <= end);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 
 	/// @copydoc slice::operator[](int) const
 	const T &operator[](int idx) const {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 };

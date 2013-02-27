@@ -229,7 +229,7 @@ public:
 	}
 
 	void insert(int idx, T elem) {
-		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(idx, _len);
 		_ensure_capacity(1);
 		if (idx < _len) {
 			T *dst = _data + idx;
@@ -246,7 +246,7 @@ public:
 	}
 
 	void remove(int idx) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		if (idx == _len - 1) {
 			_data[--_len] = 0;
 			return;
@@ -257,7 +257,7 @@ public:
 	}
 
 	void insert(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(idx, _len);
 		if (s.len() == 0) {
 			return;
 		}
@@ -280,8 +280,8 @@ public:
 
 	void remove(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		const int len = end - begin;
 		if (end < _len) {
 			::memmove(_data + begin, _data + end,
@@ -296,14 +296,14 @@ public:
 	}
 
 	slice<T> sub(int begin) {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	slice<T> sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 
@@ -312,14 +312,14 @@ public:
 	}
 
 	slice<const T> sub(int begin) const {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 };
@@ -347,11 +347,11 @@ public:
 	string &operator=(slice<const char> r);
 	string &operator=(const char *cstr);
 	char &operator[](int idx) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 	const char &operator[](int idx) const {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 	operator slice<char>() { return sub(); }

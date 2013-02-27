@@ -16,7 +16,10 @@
 	#define _ZBS_ASSERT(expr) ((void)0)
 #endif
 
-#define _ZBS_BOUNDS_CHECK(index, length) \
+#define _ZBS_SLICE_BOUNDS_CHECK(index, length) \
+	_ZBS_ASSERT((unsigned int)(index) <= (unsigned int)(length))
+
+#define _ZBS_IDX_BOUNDS_CHECK(index, length) \
 	_ZBS_ASSERT((unsigned int)(index) < (unsigned int)(length))
 
 #define _ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(...) \

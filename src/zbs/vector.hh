@@ -384,7 +384,7 @@ public:
 	/// element is simply appended.
 	template <typename ...Args>
 	inline void pinsert(int idx, Args &&...args) {
-		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(idx, _len);
 		_ensure_capacity(1);
 		if (idx < _len) {
 			_move_forward(idx, 1);
@@ -407,7 +407,7 @@ public:
 
 	/// Removes an element at the specified position `idx`.
 	inline void remove(int idx) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		if (idx == _len - 1) {
 			_data[_len-1].~T();
 			_len--;
@@ -425,7 +425,7 @@ public:
 	/// It is safe to use a slice of the vector itself to perform the
 	/// insertion.
 	inline void insert(int idx, slice<const T> s) {
-		_ZBS_BOUNDS_CHECK(idx, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(idx, _len);
 		if (s.len() == 0) {
 			return;
 		}
@@ -479,8 +479,8 @@ public:
 	/// (`end` - `begin`).
 	inline void remove(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		const int len = end - begin;
 		if (len == 0) {
 			return;
@@ -501,15 +501,15 @@ public:
 
 	/// Returns the slice [`begin`, len()) of the vector.
 	inline slice<T> sub(int begin) {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	/// Returns the slice [`begin`, `end`) of the vector.
 	inline slice<T> sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 
@@ -520,27 +520,27 @@ public:
 
 	/// Returns the slice [`begin`, len()) of the vector.
 	inline slice<const T> sub(int begin) const {
-		_ZBS_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
 
 	/// Returns the slice [`begin`, `end`) of the vector.
 	inline slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
-		_ZBS_BOUNDS_CHECK(begin, _len);
-		_ZBS_BOUNDS_CHECK(end, _len+1);
+		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
+		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
 
 	/// Typical element access operator.
 	inline T &operator[](int idx) {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
 	/// Typical element access operator.
 	inline const T &operator[](int idx) const {
-		_ZBS_BOUNDS_CHECK(idx, _len);
+		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
 
