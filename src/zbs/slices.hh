@@ -1,3 +1,7 @@
+// This file may contain portions of the code derived/adopted from the Go
+// standard library, which is covered by a BSD-style license. You can find more
+// details in 3rdparty/go_license.txt file.
+
 #pragma once
 
 #include <utility>
@@ -91,5 +95,63 @@ int count(slice<T> s, slice<U> sep) {
 	}
 	return count;
 }
+
+/// Tests if the slice `s` starts with the slice `prefix`.
+template <typename T, typename U>
+bool starts_with(slice<T> s, slice<U> prefix) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return s.len() >= prefix.len() && s.sub(0, prefix.len()) == prefix;
+}
+
+/// Tests if the slice `s` ends with the slice `suffix`.
+template <typename T, typename U>
+bool ends_with(slice<T> s, slice<U> suffix) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return s.len() >= suffix.len() && s.sub(s.len()-suffix.len()) == suffix;
+}
+
+/// Finds the first occurrence in the slice `s` of any of the elements in `elems`.
+///
+/// Template parameters must have the same type disregarding `const` qualifier.
+/// The function has O(N) complexity.
+///
+/// @retval N The index of the first occurrence of any of the elements in `elems`.
+/// @retval -1 The `elems` is empty or none of `elems` were found within `s`.
+template <typename T, typename U>
+int index_any(slice<T> s, slice<U> elems) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	if (elems.len() == 0) {
+		return -1;
+	}
+	for (int i = 0; i < s.len(); i++) {
+		const T &a = s[i];
+		for (const U &b : elems) {
+			if (a == b) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+//
+// TODO:
+// bool             starts_with(slice<T> s, slice<U> prefix)                     // DONE
+// bool             ends_with(slice<T> s, slice<U> suffix)                       // DONE
+// int              index(slice<T> s, slice<U> subs)                             // DONE
+// int              index_any(slice<T> s, slice<U> elems)                        // DONE
+// bool             contains(slice<T> s, slice<U> subs)                          // DONE
+// void             reverse(slice<T> s)                                          // DONE
+// int              count(slice<T> s, slice<U> sep)                              // DONE
+// vector<T>        join(slice<slice<T>> ss, slice<U> sep)
+// int              last_index(slice<T> s, slice<U> subs)
+// int              last_index_any(slice<T> s, slice<U> elems)
+// vector<T>        repeat(slice<T> s, int count)
+// vector<T>        replace(slice<T> s, slice<U> old, slice<V> new, int count)
+// vector<slice<T>> split(slice<T> s, slice<U> sep)
+// vector<slice<T>> split_n(slice<T> s, slice<U> sep, int n)
+// vector<slice<T>> split_after(slice<T> s, slice<U> sep)
+// vector<slice<T>> split_after_n(slice<T> s, slice<U> sep, int n)
+// void             sort(slice<T> s);
 
 }} // namespace zbs::slices

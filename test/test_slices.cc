@@ -93,9 +93,65 @@ STF_TEST("slices::count(slice<T>, slice<U>)") {
 		// TODO: add cases where sep == ""
 	};
 	for (const auto &test : count_tests) {
-		STF_PRINTF("%d (%d) %s %s", test.count,
-			slices::count(test.str.sub(), test.sep.sub()),
-			test.str.c_str(), test.sep.c_str());
 		STF_ASSERT(slices::count(test.str.sub(), test.sep.sub()) == test.count);
+	}
+}
+
+STF_TEST("slices::starts_with(slice<T>, slice<U>)") {
+	struct test {
+		string str;
+		string prefix;
+		bool result;
+	};
+	vector<test> tests = {
+		{"12345", "123", true},
+		{"12345", "132", false},
+		{"17", "", true},
+		{"", "", true},
+		{"14", "1456", false},
+	};
+	for (const auto &test : tests) {
+		STF_ASSERT(slices::starts_with(test.str.sub(), test.prefix.sub()) == test.result);
+	}
+}
+
+STF_TEST("slices::ends_with(slice<T>, slice<U>)") {
+	struct test {
+		string str;
+		string suffix;
+		bool result;
+	};
+	vector<test> tests = {
+		{"12345", "45", true},
+		{"12345", "54", false},
+		{"17", "", true},
+		{"", "", true},
+		{"14", "5614", false},
+		{"14", "1456", false},
+	};
+	for (const auto &test : tests) {
+		STF_ASSERT(slices::ends_with(test.str.sub(), test.suffix.sub()) == test.result);
+	}
+}
+
+STF_TEST("slices::index_any(slice<T>, slice<U>)") {
+	struct test {
+		string str;
+		string elems;
+		int where;
+	};
+	vector<test> tests = {
+		{"", "", -1},
+		{"", "a", -1},
+		{"", "abc", -1},
+		{"a", "", -1},
+		{"a", "a", 0},
+		{"aaa", "a", 0},
+		{"abc", "xyz", -1},
+		{"abc", "xcz", 2},
+		{"aRegExp*", ".(|)*+?^$[]", 7},
+	};
+	for (const auto &test : tests) {
+		STF_ASSERT(slices::index_any(test.str.sub(), test.elems.sub()) == test.where);
 	}
 }
