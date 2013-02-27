@@ -36,6 +36,7 @@ extern error_code generic_error_code;
 //============================================================================
 
 class error {
+protected:
 	error_code _code;
 
 public:
@@ -46,15 +47,15 @@ public:
 };
 
 //============================================================================
-// string_error
+// verbose_error
 //============================================================================
 
-class string_error : public error {
-	const char *_message;
+class verbose_error : public error {
+protected:
+	char *_message = nullptr;
 
 public:
-	string_error();
-	~string_error();
+	~verbose_error();
 	void set(error_code code, const char *format, ...) override;
 	const char *what() const override;
 };

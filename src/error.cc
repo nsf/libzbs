@@ -29,6 +29,28 @@ static error_domain generic_error_domain;
 error_code generic_error_code(generic_error_domain, 1);
 
 //============================================================================
+// verbose_error
+//============================================================================
+
+verbose_error::~verbose_error() {
+	if (_message) {
+		::free(_message);
+	}
+}
+
+void verbose_error::set(error_code code, const char*, ...) {
+	_code = code;
+	// TODO
+}
+
+const char *verbose_error::what() const {
+	if (_message) {
+		return _message;
+	}
+	return "";
+}
+
+//============================================================================
 // abort_error
 //============================================================================
 
