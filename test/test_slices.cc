@@ -155,3 +155,74 @@ STF_TEST("slices::index_any(slice<T>, slice<U>)") {
 		STF_ASSERT(slices::index_any(test.str.sub(), test.elems.sub()) == test.where);
 	}
 }
+
+STF_TEST("slices::last_index(slice<T>, slice<U>)") {
+	struct test {
+		string str;
+		string substr;
+		int where;
+	};
+	vector<test> tests = {
+		{"", "", 0},
+		{"", "a", -1},
+		{"", "foo", -1},
+		{"fo", "foo", -1},
+		{"foo", "foo", 0},
+		{"foo", "f", 0},
+		{"oofofoofooo", "f", 7},
+		{"oofofoofooo", "foo", 7},
+		{"barfoobarfoo", "foo", 9},
+		{"foo", "", 3},
+		{"foo", "o", 2},
+		{"abcABCabc", "A", 3},
+		{"abcABCabc", "a", 6},
+	};
+	for (const auto &test : tests) {
+		STF_ASSERT(slices::last_index(test.str.sub(), test.substr.sub()) == test.where);
+	}
+}
+
+STF_TEST("slices::last_index_any(slice<T>, slice<U>)") {
+	struct test {
+		string str;
+		string elems;
+		int where;
+	};
+	vector<test> tests = {
+		{"", "", -1},
+		{"", "a", -1},
+		{"", "abc", -1},
+		{"a", "", -1},
+		{"a", "a", 0},
+		{"aaa", "a", 2},
+		{"abc", "xyz", -1},
+		{"abc", "ab", 1},
+		{"a.RegExp*", ".(|)*+?^$[]", 8},
+	};
+	for (const auto &test : tests) {
+		STF_ASSERT(slices::last_index_any(test.str.sub(), test.elems.sub()) == test.where);
+	}
+}
+
+STF_TEST("slices::sort(slice<T>)") {
+	vector<string> strings = {
+		"bbbb",
+		"aaa",
+		"dddd",
+		"ccc",
+		"CCCC",
+		"AAA",
+		"GGGG",
+		"HHH",
+	};
+	//slices::sort(strings.sub());
+	std::sort(strings.data(), strings.data() + strings.len());
+	const string *prev = nullptr;
+	for (const auto &cur : strings) {
+		printf("%s\n", cur.c_str());
+		if (prev) {
+			STF_ASSERT(*prev < cur);
+		}
+		prev = &cur;
+	}
+}

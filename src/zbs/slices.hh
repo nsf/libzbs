@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <utility>
 
 #include "_utils.hh"
@@ -18,7 +19,7 @@ namespace slices {
 /// The function has O(N) complexity.
 ///
 /// @retval N The index of the first occurrence of the `subs`.
-/// @retval -1 The `sep` was not found within `s`.
+/// @retval -1 The `subs` was not found within `s`.
 template <typename T, typename U>
 int index(slice<T> s, slice<U> subs) {
 	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
@@ -41,6 +42,30 @@ int index(slice<T> s, slice<U> subs) {
 	for (int i = 0; i+n <= s.len(); i++) {
 		if (s[i] == c && s.sub(i, i+n) == subs) {
 			return i;
+		}
+	}
+	return -1;
+}
+
+/// Finds the first occurrence in the slice `s` of any of the elements in `elems`.
+///
+/// Template parameters must have the same type disregarding `const` qualifier.
+/// The function has O(N) complexity.
+///
+/// @retval N The index of the first occurrence of any of the elements in `elems`.
+/// @retval -1 The `elems` is empty or none of `elems` were found within `s`.
+template <typename T, typename U>
+int index_any(slice<T> s, slice<U> elems) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	if (elems.len() == 0) {
+		return -1;
+	}
+	for (int i = 0; i < s.len(); i++) {
+		const T &a = s[i];
+		for (const U &b : elems) {
+			if (a == b) {
+				return i;
+			}
 		}
 	}
 	return -1;
@@ -110,20 +135,44 @@ bool ends_with(slice<T> s, slice<U> suffix) {
 	return s.len() >= suffix.len() && s.sub(s.len()-suffix.len()) == suffix;
 }
 
-/// Finds the first occurrence in the slice `s` of any of the elements in `elems`.
+/// Finds the last instance of subslice `subs` within the slice `s`.
 ///
 /// Template parameters must have the same type disregarding `const` qualifier.
 /// The function has O(N) complexity.
 ///
-/// @retval N The index of the first occurrence of any of the elements in `elems`.
+/// @retval N The index of the last occurrence of the `subs`.
+/// @retval -1 The `subs` was not found within `s`.
+template <typename T, typename U>
+int last_index(slice<T> s, slice<U> subs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	int n = subs.len();
+	if (n == 0) {
+		return s.len();
+	}
+
+	const U &c = subs[0];
+	for (int i = s.len() - n; i >= 0; i--) {
+		if (s[i] == c && (n == 1 || s.sub(i, i+n) == subs)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+/// Finds the last occurrence in `s` of any of the `elems`.
+///
+/// Template parameters must have the same type disregarding `const` qualifier.
+/// The function has O(N) complexity.
+///
+/// @retval N The index of the last occurrence of any of the `elems`.
 /// @retval -1 The `elems` is empty or none of `elems` were found within `s`.
 template <typename T, typename U>
-int index_any(slice<T> s, slice<U> elems) {
+int last_index_any(slice<T> s, slice<U> elems) {
 	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
 	if (elems.len() == 0) {
 		return -1;
 	}
-	for (int i = 0; i < s.len(); i++) {
+	for (int i = s.len()-1; i >= 0; i--) {
 		const T &a = s[i];
 		for (const U &b : elems) {
 			if (a == b) {
@@ -132,6 +181,12 @@ int index_any(slice<T> s, slice<U> elems) {
 		}
 	}
 	return -1;
+}
+
+/// Sorts the slice `s`.
+template <typename T>
+void sort(slice<T> s) {
+	std::sort(s.data(), s.data() + s.len());
 }
 
 //
@@ -143,15 +198,15 @@ int index_any(slice<T> s, slice<U> elems) {
 // bool             contains(slice<T> s, slice<U> subs)                          // DONE
 // void             reverse(slice<T> s)                                          // DONE
 // int              count(slice<T> s, slice<U> sep)                              // DONE
-// vector<T>        join(slice<slice<T>> ss, slice<U> sep)
-// int              last_index(slice<T> s, slice<U> subs)
-// int              last_index_any(slice<T> s, slice<U> elems)
+// vector<T>        join(slice<slice<T>> ss, slice<U> sep)                       // FAIL
+// int              last_index(slice<T> s, slice<U> subs)                        // DONE
+// int              last_index_any(slice<T> s, slice<U> elems)                   // DONE
 // vector<T>        repeat(slice<T> s, int count)
 // vector<T>        replace(slice<T> s, slice<U> old, slice<V> new, int count)
-// vector<slice<T>> split(slice<T> s, slice<U> sep)
-// vector<slice<T>> split_n(slice<T> s, slice<U> sep, int n)
-// vector<slice<T>> split_after(slice<T> s, slice<U> sep)
-// vector<slice<T>> split_after_n(slice<T> s, slice<U> sep, int n)
-// void             sort(slice<T> s);
+// vector<slice<T>> split(slice<T> s, slice<U> sep)                              // FAIL
+// vector<slice<T>> split_n(slice<T> s, slice<U> sep, int n)                     // FAIL
+// vector<slice<T>> split_after(slice<T> s, slice<U> sep)                        // FAIL
+// vector<slice<T>> split_after_n(slice<T> s, slice<U> sep, int n)               // FAIL
+// void             sort(slice<T> s);                                            // DONE
 
 }} // namespace zbs::slices

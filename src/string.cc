@@ -34,4 +34,8 @@ bool operator==(const string &lhs, const char *rhs) {
 	return ::strcmp(lhs.c_str(), rhs) == 0;
 }
 
+bool operator<(const string &lhs, const string &rhs) {
+	return lhs.sub() < rhs.sub();
+}
+
 } // namespace zbs

@@ -317,13 +317,19 @@ bool operator==(slice<T> lhs, slice<T> rhs) {
 
 template <typename T>
 bool operator<(slice<T> lhs, slice<T> rhs) {
-	const int len = std::min(lhs.len(), rhs.len());
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < rhs.len(); i++) {
+		if (i == lhs.len()) {
+			// lhs.len() < rhs.len(), but the common part is ==
+			return true;
+		}
 		if (lhs.data()[i] < rhs.data()[i]) {
 			return true;
 		}
+		if (rhs.data()[i] < lhs.data()[i]) {
+			return false;
+		}
 	}
-	return lhs.len() < rhs.len();
+	return false;
 }
 
 template <typename T>
