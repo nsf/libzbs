@@ -22,4 +22,30 @@ string &string::operator=(const char *cstr) {
 	return operator=(slice<const char>(cstr));
 }
 
+string operator+(const string &lhs, slice<const char> rhs) {
+	string out;
+	out.reserve(lhs.len() + rhs.len());
+	out.append(lhs);
+	out.append(rhs);
+	return out;
+}
+
+string operator+(slice<const char> lhs, const string &rhs) {
+	string out;
+	out.reserve(lhs.len() + rhs.len());
+	out.append(lhs);
+	out.append(rhs);
+	return out;
+}
+
+string operator+(string &&lhs, slice<const char> rhs) {
+	lhs.append(rhs);
+	return lhs;
+}
+
+string operator+(slice<const char> lhs, string &&rhs) {
+	rhs.insert(0, lhs);
+	return rhs;
+}
+
 } // namespace zbs

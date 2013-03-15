@@ -358,4 +358,9 @@ public:
 	operator slice<const char>() const { return sub(); }
 };
 
+string operator+(const string &lhs, slice<const char> rhs);
+string operator+(slice<const char> lhs, const string &rhs);
+string operator+(string &&lhs, slice<const char> rhs);
+string operator+(slice<const char> lhs, string &&rhs);
+
 } // namespace zbs

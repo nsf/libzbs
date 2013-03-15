@@ -238,3 +238,23 @@ STF_TEST("string::remove(int, int)") {
 	b.remove(3, 5);
 	STF_ASSERT(b == "347");
 }
+
+STF_TEST("operator+(const string &lhs, slice<const char> rhs)") {
+	zbs::string a = "Hello";
+	zbs::string b = a + ", world";
+	STF_ASSERT(b == "Hello, world");
+}
+
+STF_TEST("operator+(slice<const char> lhs, const string &rhs)") {
+	zbs::string a = "456";
+	zbs::string b = "123" + a;
+	STF_ASSERT(b == "123456");
+}
+
+STF_TEST("operator+(string &&lhs, slice<const char> rhs)") {
+	STF_ASSERT(zbs::string("123") + "456" == "123456");
+}
+
+STF_TEST("operator+(slice<const char> lhs, string &&rhs)") {
+	STF_ASSERT("456" + zbs::string("321") == "456321");
+}
