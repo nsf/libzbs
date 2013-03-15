@@ -301,8 +301,9 @@ public:
 // slice comparison operators
 //============================================================================
 
-template <typename T>
-bool operator==(slice<T> lhs, slice<T> rhs) {
+template <typename T, typename U>
+bool operator==(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
 	if (lhs.len() != rhs.len()) {
 		return false;
 	}
@@ -315,8 +316,9 @@ bool operator==(slice<T> lhs, slice<T> rhs) {
 	return true;
 }
 
-template <typename T>
-bool operator<(slice<T> lhs, slice<T> rhs) {
+template <typename T, typename U>
+bool operator<(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
 	for (int i = 0; i < rhs.len(); i++) {
 		if (i == lhs.len()) {
 			// lhs.len() < rhs.len(), but the common part is ==
@@ -332,14 +334,37 @@ bool operator<(slice<T> lhs, slice<T> rhs) {
 	return false;
 }
 
-template <typename T>
-bool operator!=(slice<T> lhs, slice<T> rhs) { return !operator==(lhs, rhs); }
-template <typename T>
-bool operator>=(slice<T> lhs, slice<T> rhs) { return !operator<(lhs, rhs); }
-template <typename T>
-bool operator<=(slice<T> lhs, slice<T> rhs) { return !operator<(rhs, lhs); }
-template <typename T>
-bool operator>(slice<T> lhs, slice<T> rhs) { return operator<(rhs, lhs); }
+template <typename T, typename U>
+bool operator!=(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return !operator==(lhs, rhs);
+}
+
+template <typename T, typename U>
+bool operator>=(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return !operator<(lhs, rhs);
+}
+
+template <typename T, typename U>
+bool operator<=(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return !operator<(rhs, lhs);
+}
+
+template <typename T, typename U>
+bool operator>(slice<T> lhs, slice<U> rhs) {
+	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
+	return operator<(rhs, lhs);
+}
+
+// additional non-template operator overloads for strings
+bool operator==(slice<const char> lhs, slice<const char> rhs);
+bool operator<(slice<const char> lhs, slice<const char> rhs);
+bool operator!=(slice<const char> lhs, slice<const char> rhs);
+bool operator>=(slice<const char> lhs, slice<const char> rhs);
+bool operator<=(slice<const char> lhs, slice<const char> rhs);
+bool operator>(slice<const char> lhs, slice<const char> rhs);
 
 //============================================================================
 // slice comparison operators
