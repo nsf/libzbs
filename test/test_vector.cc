@@ -5,20 +5,11 @@
 STF_SUITE_NAME("zbs/vector");
 
 bool check_vector(zbs::vector<int> &v, const zbs::vector<int> &gold) {
-	if (v.len() != gold.len()) {
-		return false;
-	}
 	// sanity check
 	if (v.cap() < gold.len()) {
 		return false;
 	}
-
-	for (int i = 0; i < v.len(); i++) {
-		if (v[i] != gold[i]) {
-			return false;
-		}
-	}
-	return true;
+	return v.sub() == gold.sub();
 }
 
 class oop {

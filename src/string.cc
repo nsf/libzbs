@@ -22,20 +22,4 @@ string &string::operator=(const char *cstr) {
 	return operator=(slice<const char>(cstr));
 }
 
-bool operator==(const string &lhs, const string &rhs) {
-	return lhs.len() == rhs.len() && ::strcmp(lhs.c_str(), rhs.c_str()) == 0;
-}
-
-bool operator==(const char *lhs, const string &rhs) {
-	return ::strcmp(lhs, rhs.c_str()) == 0;
-}
-
-bool operator==(const string &lhs, const char *rhs) {
-	return ::strcmp(lhs.c_str(), rhs) == 0;
-}
-
-bool operator<(const string &lhs, const string &rhs) {
-	return lhs.sub() < rhs.sub();
-}
-
 } // namespace zbs

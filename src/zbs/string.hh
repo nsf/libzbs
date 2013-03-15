@@ -358,9 +358,4 @@ public:
 	operator slice<const char>() const { return sub(); }
 };
 
-bool operator==(const string &lhs, const string &rhs);
-bool operator==(const char *lhs, const string &rhs);
-bool operator==(const string &lhs, const char *rhs);
-bool operator<(const string &lhs, const string &rhs);
-
 } // namespace zbs

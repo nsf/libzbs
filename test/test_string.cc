@@ -152,7 +152,7 @@ STF_TEST("string::resize(int, T)") {
 	// resize
 	zbs::string a = "123";
 	a.resize(20);
-	STF_ASSERT(a == "123");
+	STF_ASSERT(a.sub(0, 3) == "123");
 	STF_ASSERT(a.len() == 20);
 
 	zbs::string b = "456";
