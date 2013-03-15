@@ -20,6 +20,8 @@ public:									\
 	slice(): _data(nullptr), _len(0) {}				\
 	slice(std::initializer_list<T> r):				\
 		_data(r.begin()), _len(r.size()) {}			\
+	template <int N>						\
+	slice(const T (&array)[N]): _data(array), _len(N) {}		\
 	slice(const T *data, int len): _data(data), _len(len) {}	\
 	slice(const slice<T> &r): _data(r.data()), _len(r.len()) {}	\
 	slice(const slice &r) = default;				\
@@ -73,6 +75,10 @@ public:
 	/// equivalent, because you can't do anything useful with slice's data
 	/// if its length is zero.
 	slice(): _data(nullptr), _len(0) {}
+
+	/// Construct a slice using a C array.
+	template <int N>
+	slice(T (&array)[N]): _data(array), _len(N) {}
 
 	/// Constructs a slice using raw data pointer and a length.
 	/// @unsafe
@@ -160,6 +166,10 @@ private:
 public:
 	/// @copydoc slice::slice()
 	slice(): _data(nullptr), _len(0) {}
+
+	/// Construct a slice using a C array.
+	template <int N>
+	slice(const T (&array)[N]): _data(array), _len(N) {}
 
 	/// Constructs a slice using std::initializer_list.
 	///
