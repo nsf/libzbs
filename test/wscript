@@ -1,10 +1,10 @@
 def build(bld):
-	tests = bld.path.ant_glob("test_*.cc")
+	tests = bld.path.ant_glob("*.cc")
 	for t in tests:
 		bld.program(
 			features = 'test',
 			source = [t],
-			target = t.name[:-3],
+			target = 'test_' + t.name[:-3],
 			includes = '../src ..',
 			use = 'zbs',
 		)
