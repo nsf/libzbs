@@ -358,6 +358,19 @@ public:
 	operator slice<const char>() const { return sub(); }
 };
 
+// string vs. const char*
+string operator+(const string &lhs, const char *rhs);
+string operator+(const char *lhs, const string &rhs);
+string operator+(string &&lhs, const char *rhs);
+string operator+(const char *lhs, string &&rhs);
+
+// string vs. string
+string operator+(const string &lhs, const string &rhs);
+string operator+(string &&lhs, string &&rhs);
+string operator+(string &&lhs, const string &rhs);
+string operator+(const string &lhs, string &&rhs);
+
+// string vs. slice<const char>
 string operator+(const string &lhs, slice<const char> rhs);
 string operator+(slice<const char> lhs, const string &rhs);
 string operator+(string &&lhs, slice<const char> rhs);
