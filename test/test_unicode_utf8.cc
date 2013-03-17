@@ -54,7 +54,12 @@ utf8map_t surrogate_map[] = {
 };
 
 string test_strings[] = {
-	// TODO
+	"",
+	"abcd",
+	"☺☻☹",
+	"日a本b語ç日ð本Ê語þ日¥本¼語i日©",
+	"日a本b語ç日ð本Ê語þ日¥本¼語i日©日a本b語ç日ð本Ê語þ日¥本¼語i日©日a本b語ç日ð本Ê語þ日¥本¼語i日©",
+	"\x80\x80\x80\x80",
 };
 
 struct rune_count_test {
