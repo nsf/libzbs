@@ -27,9 +27,12 @@ def configure(conf):
 		conf.env.append_unique('CXXFLAGS', '-stdlib=libc++')
 		conf.env.append_unique('LINKFLAGS', '-stdlib=libc++')
 
-	conf.load('doxygen')
-	# config headers?
+	try:
+		conf.load('doxygen')
+	except conf.errors.ConfigurationError:
+		conf.to_log('doxygen was not found (docs target will be disabled)')
 
+	# config headers
 	conf.define('ZBS_ENABLE_ASSERT', 1)
 	conf.write_config_header('_config.h')
 
@@ -40,7 +43,10 @@ class DocsContext(BuildContext):
 	fun = 'docs'
 
 def docs(bld):
-	bld.recurse('docs')
+	if bld.env.DOXYGEN:
+		bld.recurse('docs')
+	else:
+		bld.fatal("doxygen was not found on your system, it is required to build the docs target")
 
 def build(bld):
 	bld.recurse('src test')
