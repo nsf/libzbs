@@ -4,4 +4,10 @@
 
 @namespace zbs::slices
 @brief Various generic slice utility functions.
+
+@namespace zbs::unicode
+@brief Data and functions for testing some properties of Unicode code points.
+
+@namespace zbs::unicode::utf8
+@brief Functions and constants to support text encoded in UTF-8.
 */
