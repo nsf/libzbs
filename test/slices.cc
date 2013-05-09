@@ -215,11 +215,9 @@ STF_TEST("slices::sort(slice<T>)") {
 		"GGGG",
 		"HHH",
 	};
-	//slices::sort(strings.sub());
-	std::sort(strings.data(), strings.data() + strings.len());
+	slices::sort(strings.sub());
 	const string *prev = nullptr;
 	for (const auto &cur : strings) {
-		printf("%s\n", cur.c_str());
 		if (prev) {
 			STF_ASSERT(*prev < cur);
 		}
