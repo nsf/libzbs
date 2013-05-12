@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include "_config.h"
+#include "types.hh"
 
 #ifdef ZBS_ENABLE_ASSERT
 	#define _ZBS_ASSERT(expr)				\
@@ -46,5 +47,11 @@ struct is_same_disregarding_const<T, U, Args...> :
 	> {};
 
 void assert_abort(const char *assertion, const char *file, int line, const char *func);
+uint32 fastrand();
+void *xmalloc(int n);
+void xfree(void *ptr);
+
+template <typename T> T *malloc(int n) { return (T*)xmalloc(sizeof(T) * n); }
+template <typename T> void free(T *ptr) { xfree(ptr); }
 
 }} // namespace zbs::detail
