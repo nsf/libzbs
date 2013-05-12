@@ -218,7 +218,7 @@ public:
 	/// @copydoc slice::len()
 	constexpr int len() { return _len; }
 
-	/// @copydoc slice::data() const
+	/// @copydoc slice::data()
 	constexpr const T *data() { return _data; }
 
 	/// @copydoc slice::sub() const
