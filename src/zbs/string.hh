@@ -376,4 +376,13 @@ string operator+(slice<const char> lhs, const string &rhs);
 string operator+(string &&lhs, slice<const char> rhs);
 string operator+(slice<const char> lhs, string &&rhs);
 
+// hash specialization for string
+template <typename T>
+struct hash;
+
+template <>
+struct hash<string> {
+	int operator()(const string &s, int seed);
+};
+
 } // namespace zbs
