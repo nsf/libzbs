@@ -249,6 +249,33 @@ public:
 		return *this;
 	}
 
+	/// Detaches the data (if any) from the vector. The caller is
+	/// responsible for freeing it with detail::free() afterwards. It is
+	/// useful in certain cases, like for example moving memory from vector
+	/// to string. Sure it's possible to add move constructors and move
+	/// assignment operators for these cases, but it introduces
+	/// dependencies between otherwise independent types.
+	/// @unsafe
+	inline T *detach_unsafe() {
+		T *data = _data;
+		_data = nullptr;
+		_len = 0;
+		_cap = 0;
+		return data;
+	}
+
+	/// Uses provided arguments as internal data, releasing all the
+	/// previous elements of the vector. The data should be previously
+	/// allocated with detail::malloc().
+	/// @unsafe
+	inline void attach_unsafe(T *data, int len, int cap) {
+		clear();
+		shrink();
+		_data = data;
+		_len = len;
+		_cap = cap;
+	}
+
 	/// Returns an amount of active elements the vector holds at a given
 	/// moment.
 	inline int len() const { return _len; }

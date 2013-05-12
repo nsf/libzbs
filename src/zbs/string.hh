@@ -140,6 +140,22 @@ public:
 		return *this;
 	}
 
+	inline T *detach_unsafe() {
+		T *data = _data;
+		_data = nullptr;
+		_len = 0;
+		_cap = 0;
+		return data;
+	}
+
+	inline void attach_unsafe(T *data, int len, int cap) {
+		clear();
+		shrink();
+		_data = data;
+		_len = len;
+		_cap = cap;
+	}
+
 	int len() const { return _len; }
 	int cap() const { return _cap; }
 	T *data() { return _data; }
