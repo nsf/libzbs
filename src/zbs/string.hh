@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <algorithm>
@@ -80,7 +79,7 @@ public:
 		if (_len == 0) {
 			return;
 		}
-		_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
+		_data = detail::malloc<T>(_cap + 1);
 		::memcpy(_data, r.data(), r.len() * sizeof(T));
 		_data[_len] = 0;
 	}
@@ -97,7 +96,7 @@ public:
 		// _data is always != nullptr, we can't use it to see it the
 		// memory was actually allocated
 		if (_data != detail::char_traits<T>::empty_string()) {
-			free(_data);
+			detail::free(_data);
 		}
 	}
 
@@ -108,10 +107,10 @@ public:
 		}
 		if (_cap < r.len()) {
 			if (_data != detail::char_traits<T>::empty_string()) {
-				::free(_data);
+				detail::free(_data);
 			}
 			_cap = _len = r.len();
-			_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
+			_data = detail::malloc<T>(_cap + 1);
 			::memcpy(_data, r.data(), _len * sizeof(T));
 			_data[_len] = 0;
 		} else {
@@ -130,7 +129,7 @@ public:
 
 	basic_string &operator=(basic_string &&r) {
 		if (_data != detail::char_traits<T>::empty_string()) {
-			free(_data);
+			detail::free(_data);
 		}
 		_data = r._data;
 		_len = r._len;
@@ -161,7 +160,7 @@ public:
 
 		T *old_data = _data;
 		_cap = n;
-		_data = static_cast<T*>(malloc((_cap + 1) * sizeof(T)));
+		_data = detail::malloc<T>(_cap + 1);
 		if (_len > 0) {
 			// copy terminating zero as well
 			::memcpy(_data, old_data, (_len + 1) * sizeof(T));
@@ -169,7 +168,7 @@ public:
 			_data[0] = 0;
 		}
 		if (old_data != detail::char_traits<T>::empty_string()) {
-			::free(old_data);
+			detail::free(old_data);
 		}
 	}
 
@@ -180,14 +179,14 @@ public:
 
 		T *old_data = _data;
 		if (_len > 0) {
-			_data = static_cast<T*>(::malloc((_len + 1) * sizeof(T)));
+			_data = detail::malloc<T>(_len + 1);
 			::memcpy(_data, old_data, (_len + 1) * sizeof(T));
 		} else {
 			_data = detail::char_traits<T>::empty_string();
 		}
 		_cap = _len;
 		if (old_data != detail::char_traits<T>::empty_string()) {
-			::free(old_data);
+			detail::free(old_data);
 		}
 	}
 

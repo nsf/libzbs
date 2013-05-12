@@ -2,9 +2,8 @@
 
 #include <initializer_list>
 #include <limits>
-#include <memory>
+#include <new>
 #include <algorithm>
-#include <cstdlib>
 
 #include "_utils.hh"
 #include "slice.hh"
@@ -135,7 +134,7 @@ public:
 		if (_len == 0) {
 			return;
 		}
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		_data = detail::malloc<T>(_cap);
 		for (int i = 0; i < _len; i++) {
 			new (&_data[i]) T(r.data()[i]);
 		}
@@ -150,7 +149,7 @@ public:
 		if (_len == 0) {
 			return;
 		}
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		_data = detail::malloc<T>(_cap);
 		for (int i = 0; i < _len; i++) {
 			new (&_data[i]) T;
 		}
@@ -163,7 +162,7 @@ public:
 		if (_len == 0) {
 			return;
 		}
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		_data = detail::malloc<T>(_cap);
 		for (int i = 0; i < _len; i++) {
 			new (&_data[i]) T(elem);
 		}
@@ -174,7 +173,7 @@ public:
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
 		}
-		free(_data);
+		detail::free(_data);
 	}
 
 	/// Replaces the contents of the vector with a copy of the contents of
@@ -191,9 +190,9 @@ public:
 			for (int i = 0; i < _len; i++) {
 				_data[i].~T();
 			}
-			free(_data);
+			detail::free(_data);
 			_cap = _len = r.len();
-			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+			_data = detail::malloc<T>(_cap);
 			for (int i = 0; i < _len; i++) {
 				new (&_data[i]) T(r.data()[i]);
 			}
@@ -240,7 +239,7 @@ public:
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
 		}
-		free(_data);
+		detail::free(_data);
 		_data = r._data;
 		_len = r._len;
 		_cap = r._cap;
@@ -289,12 +288,12 @@ public:
 
 		T *old_data = _data;
 		_cap = n;
-		_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+		_data = detail::malloc<T>(_cap);
 		for (int i = 0; i < _len; i++) {
 			new (&_data[i]) T(std::move(old_data[i]));
 			old_data[i].~T();
 		}
-		free(old_data);
+		detail::free(old_data);
 	}
 
 	/// Releases unused memory to the system.
@@ -308,7 +307,7 @@ public:
 		T *old_data = _data;
 		_cap = _len;
 		if (_len > 0) {
-			_data = static_cast<T*>(malloc(_cap * sizeof(T)));
+			_data = detail::malloc<T>(_cap);
 			for (int i = 0; i < _len; i++) {
 				new (&_data[i]) T(std::move(old_data[i]));
 				old_data[i].~T();
@@ -316,7 +315,7 @@ public:
 		} else {
 			_data = nullptr;
 		}
-		free(old_data);
+		detail::free(old_data);
 	}
 
 	/// Resizes the vector to contain `n` elements.
