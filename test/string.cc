@@ -258,3 +258,32 @@ STF_TEST("operator+(string &&lhs, slice<const char> rhs)") {
 STF_TEST("operator+(slice<const char> lhs, string &&rhs)") {
 	STF_ASSERT("456" + zbs::string("321") == "456321");
 }
+
+STF_TEST("string_iter") {
+	using namespace zbs;
+
+	string a = "проверка";
+	int i = 0;
+	constexpr rune_and_offset table[] = {
+		{U'п', 0},
+		{U'р', 2},
+		{U'о', 4},
+		{U'в', 6},
+		{U'е', 8},
+		{U'р', 10},
+		{U'к', 12},
+		{U'а', 14},
+	};
+	for (const auto &iter : a) {
+		STF_ASSERT(iter.rune == table[i].rune);
+		STF_ASSERT(iter.offset == table[i].offset);
+		i++;
+	}
+
+	i = 2;
+	for (const auto &iter : string_iter(a.sub(4))) {
+		STF_ASSERT(iter.rune == table[i].rune);
+		STF_ASSERT(iter.offset == table[i].offset);
+		i++;
+	}
+}

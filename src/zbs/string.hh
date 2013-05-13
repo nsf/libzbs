@@ -400,4 +400,32 @@ struct hash<string> {
 	int operator()(const string &s, int seed);
 };
 
+// for each loop support
+struct rune_and_offset {
+	zbs::rune rune;
+	int offset;
+};
+
+class string_iter {
+	slice<const char> _s;
+	rune _r;
+	int _offset;
+
+public:
+	explicit string_iter(slice<const char> s);
+	string_iter &operator++();
+	bool operator==(const string_iter &r) const;
+	bool operator!=(const string_iter &r) const;
+	rune_and_offset operator*() const;
+};
+
+// these are useful for manual init, like:
+// for (const auto &iter : string_iter(s.sub(x))) {}
+static inline string_iter begin(string_iter si) { return si; }
+static inline string_iter end(string_iter si) { return si; }
+
+string_iter begin(const string &s);
+string_iter end(const string &s);
+
+
 } // namespace zbs

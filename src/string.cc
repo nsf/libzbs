@@ -1,4 +1,7 @@
 #include "zbs/string.hh"
+#include "zbs/unicode/utf8.hh"
+
+namespace utf8 = zbs::unicode::utf8;
 
 namespace zbs {
 
@@ -97,6 +100,38 @@ int hash<string>::operator()(const string &s, int seed) {
 	for (const auto &b : s.sub())
 		hash = (hash ^ b) * M1;
 	return hash;
+}
+
+string_iter::string_iter(slice<const char> s): _s(s), _r(0), _offset(0) {
+	_r = utf8::decode_rune(_s);
+}
+
+string_iter &string_iter::operator++() {
+	const int len = utf8::rune_len(_r);
+	_s = _s.sub(len);
+	_offset += len;
+	_r = utf8::decode_rune(_s);
+	return *this;
+}
+
+bool string_iter::operator==(const string_iter &r) const {
+	return _s.data() == r._s.data();
+}
+
+bool string_iter::operator!=(const string_iter &r) const {
+	return _s.data() != r._s.data();
+}
+
+string_iter begin(const string &s) {
+	return string_iter(s);
+}
+
+string_iter end(const string &s) {
+	return string_iter(s.sub(s.len()));
+}
+
+rune_and_offset string_iter::operator*() const {
+	return {_r, _offset};
 }
 
 } // namespace zbs
