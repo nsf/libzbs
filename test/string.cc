@@ -283,7 +283,7 @@ STF_TEST("string_iter") {
 	i = 2;
 	for (const auto &iter : string_iter(a.sub(4))) {
 		STF_ASSERT(iter.rune == table[i].rune);
-		STF_ASSERT(iter.offset == table[i].offset);
+		STF_ASSERT(iter.offset == table[i].offset-4);
 		i++;
 	}
 }

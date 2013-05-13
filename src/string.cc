@@ -114,12 +114,12 @@ string_iter &string_iter::operator++() {
 	return *this;
 }
 
-bool string_iter::operator==(const string_iter &r) const {
-	return _s.data() == r._s.data();
+bool string_iter::operator==(const string_iter&) const {
+	return _s.len() == 0;
 }
 
-bool string_iter::operator!=(const string_iter &r) const {
-	return _s.data() != r._s.data();
+bool string_iter::operator!=(const string_iter&) const {
+	return _s.len() > 0;
 }
 
 string_iter begin(const string &s) {
@@ -127,7 +127,7 @@ string_iter begin(const string &s) {
 }
 
 string_iter end(const string &s) {
-	return string_iter(s.sub(s.len()));
+	return string_iter(s);
 }
 
 rune_and_offset string_iter::operator*() const {
