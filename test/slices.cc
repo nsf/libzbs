@@ -90,7 +90,7 @@ STF_TEST("slices::count(slice<T>, slice<U>)") {
 		{"1,2,,2,7,f,s,b,w,,qw", ",", 10},
 		{"756", "756789", 0},
 		{"", "1", 0},
-		// TODO: add cases where sep == ""
+		{"...", "", 4},
 	};
 	for (const auto &test : count_tests) {
 		STF_ASSERT(slices::count(test.str.sub(), test.sep.sub()) == test.count);

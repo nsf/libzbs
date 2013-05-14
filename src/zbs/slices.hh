@@ -102,8 +102,7 @@ int count(slice<T> s, slice<U> sep) {
 	_ZBS_ASSERT_IS_SAME_DISREGARDING_CONST(T, U);
 	const int n = sep.len();
 	if (n == 0) {
-		// TODO: return rune count + 1 here
-		return 0;
+		return s.len() + 1;
 	}
 	if (n > s.len()) {
 		return 0;
