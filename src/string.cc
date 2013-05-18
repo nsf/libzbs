@@ -126,8 +126,8 @@ string_iter begin(const string &s) {
 	return string_iter(s);
 }
 
-string_iter end(const string &s) {
-	return string_iter(s);
+string_iter end(const string&) {
+	return string_iter();
 }
 
 rune_and_offset string_iter::operator*() const {

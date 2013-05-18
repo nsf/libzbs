@@ -412,6 +412,7 @@ class string_iter {
 	int _offset;
 
 public:
+	string_iter() = default;
 	explicit string_iter(slice<const char> s);
 	string_iter &operator++();
 	bool operator==(const string_iter &r) const;
