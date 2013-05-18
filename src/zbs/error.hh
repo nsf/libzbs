@@ -64,11 +64,11 @@ public:
 // abort_error
 //============================================================================
 
-class abort_error_t : public error {
+class abort_error : public error {
 public:
 	void set(error_code code, const char *format, ...) override;
 };
 
-extern abort_error_t abort_error;
+extern abort_error default_error;
 
 } // namespace zbs

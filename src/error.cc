@@ -54,7 +54,7 @@ const char *verbose_error::what() const {
 // abort_error
 //============================================================================
 
-void abort_error_t::set(error_code, const char *format, ...) {
+void abort_error::set(error_code, const char *format, ...) {
 	fprintf(stderr, "abort: ");
 	va_list vl;
 	va_start(vl, format);
@@ -64,6 +64,6 @@ void abort_error_t::set(error_code, const char *format, ...) {
 	abort();
 }
 
-abort_error_t abort_error;
+abort_error default_error;
 
 } // namespace zbs
