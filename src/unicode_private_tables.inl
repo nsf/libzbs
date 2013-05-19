@@ -1,0 +1,326 @@
+const uint8 latin_properties[max_latin1+1] = {
+	pC, // (0x00) '\x00'
+	pC, // (0x01) '\x01'
+	pC, // (0x02) '\x02'
+	pC, // (0x03) '\x03'
+	pC, // (0x04) '\x04'
+	pC, // (0x05) '\x05'
+	pC, // (0x06) '\x06'
+	pC, // (0x07) '\a'
+	pC, // (0x08) '\b'
+	pC, // (0x09) '\t'
+	pC, // (0x0A) '\n'
+	pC, // (0x0B) '\v'
+	pC, // (0x0C) '\f'
+	pC, // (0x0D) '\r'
+	pC, // (0x0E) '\x0e'
+	pC, // (0x0F) '\x0f'
+	pC, // (0x10) '\x10'
+	pC, // (0x11) '\x11'
+	pC, // (0x12) '\x12'
+	pC, // (0x13) '\x13'
+	pC, // (0x14) '\x14'
+	pC, // (0x15) '\x15'
+	pC, // (0x16) '\x16'
+	pC, // (0x17) '\x17'
+	pC, // (0x18) '\x18'
+	pC, // (0x19) '\x19'
+	pC, // (0x1A) '\x1a'
+	pC, // (0x1B) '\x1b'
+	pC, // (0x1C) '\x1c'
+	pC, // (0x1D) '\x1d'
+	pC, // (0x1E) '\x1e'
+	pC, // (0x1F) '\x1f'
+	pZ | pp, // (0x20) ' '
+	pP | pp, // (0x21) '!'
+	pP | pp, // (0x22) '"'
+	pP | pp, // (0x23) '#'
+	pS | pp, // (0x24) '$'
+	pP | pp, // (0x25) '%'
+	pP | pp, // (0x26) '&'
+	pP | pp, // (0x27) '\''
+	pP | pp, // (0x28) '('
+	pP | pp, // (0x29) ')'
+	pP | pp, // (0x2A) '*'
+	pS | pp, // (0x2B) '+'
+	pP | pp, // (0x2C) ','
+	pP | pp, // (0x2D) '-'
+	pP | pp, // (0x2E) '.'
+	pP | pp, // (0x2F) '/'
+	pN | pp, // (0x30) '0'
+	pN | pp, // (0x31) '1'
+	pN | pp, // (0x32) '2'
+	pN | pp, // (0x33) '3'
+	pN | pp, // (0x34) '4'
+	pN | pp, // (0x35) '5'
+	pN | pp, // (0x36) '6'
+	pN | pp, // (0x37) '7'
+	pN | pp, // (0x38) '8'
+	pN | pp, // (0x39) '9'
+	pP | pp, // (0x3A) ':'
+	pP | pp, // (0x3B) ';'
+	pS | pp, // (0x3C) '<'
+	pS | pp, // (0x3D) '='
+	pS | pp, // (0x3E) '>'
+	pP | pp, // (0x3F) '?'
+	pP | pp, // (0x40) '@'
+	pLu | pp, // (0x41) 'A'
+	pLu | pp, // (0x42) 'B'
+	pLu | pp, // (0x43) 'C'
+	pLu | pp, // (0x44) 'D'
+	pLu | pp, // (0x45) 'E'
+	pLu | pp, // (0x46) 'F'
+	pLu | pp, // (0x47) 'G'
+	pLu | pp, // (0x48) 'H'
+	pLu | pp, // (0x49) 'I'
+	pLu | pp, // (0x4A) 'J'
+	pLu | pp, // (0x4B) 'K'
+	pLu | pp, // (0x4C) 'L'
+	pLu | pp, // (0x4D) 'M'
+	pLu | pp, // (0x4E) 'N'
+	pLu | pp, // (0x4F) 'O'
+	pLu | pp, // (0x50) 'P'
+	pLu | pp, // (0x51) 'Q'
+	pLu | pp, // (0x52) 'R'
+	pLu | pp, // (0x53) 'S'
+	pLu | pp, // (0x54) 'T'
+	pLu | pp, // (0x55) 'U'
+	pLu | pp, // (0x56) 'V'
+	pLu | pp, // (0x57) 'W'
+	pLu | pp, // (0x58) 'X'
+	pLu | pp, // (0x59) 'Y'
+	pLu | pp, // (0x5A) 'Z'
+	pP | pp, // (0x5B) '['
+	pP | pp, // (0x5C) '\\'
+	pP | pp, // (0x5D) ']'
+	pS | pp, // (0x5E) '^'
+	pP | pp, // (0x5F) '_'
+	pS | pp, // (0x60) '`'
+	pLl | pp, // (0x61) 'a'
+	pLl | pp, // (0x62) 'b'
+	pLl | pp, // (0x63) 'c'
+	pLl | pp, // (0x64) 'd'
+	pLl | pp, // (0x65) 'e'
+	pLl | pp, // (0x66) 'f'
+	pLl | pp, // (0x67) 'g'
+	pLl | pp, // (0x68) 'h'
+	pLl | pp, // (0x69) 'i'
+	pLl | pp, // (0x6A) 'j'
+	pLl | pp, // (0x6B) 'k'
+	pLl | pp, // (0x6C) 'l'
+	pLl | pp, // (0x6D) 'm'
+	pLl | pp, // (0x6E) 'n'
+	pLl | pp, // (0x6F) 'o'
+	pLl | pp, // (0x70) 'p'
+	pLl | pp, // (0x71) 'q'
+	pLl | pp, // (0x72) 'r'
+	pLl | pp, // (0x73) 's'
+	pLl | pp, // (0x74) 't'
+	pLl | pp, // (0x75) 'u'
+	pLl | pp, // (0x76) 'v'
+	pLl | pp, // (0x77) 'w'
+	pLl | pp, // (0x78) 'x'
+	pLl | pp, // (0x79) 'y'
+	pLl | pp, // (0x7A) 'z'
+	pP | pp, // (0x7B) '{'
+	pS | pp, // (0x7C) '|'
+	pP | pp, // (0x7D) '}'
+	pS | pp, // (0x7E) '~'
+	pC, // (0x7F) '\u007f'
+	pC, // (0x80) '\u0080'
+	pC, // (0x81) '\u0081'
+	pC, // (0x82) '\u0082'
+	pC, // (0x83) '\u0083'
+	pC, // (0x84) '\u0084'
+	pC, // (0x85) '\u0085'
+	pC, // (0x86) '\u0086'
+	pC, // (0x87) '\u0087'
+	pC, // (0x88) '\u0088'
+	pC, // (0x89) '\u0089'
+	pC, // (0x8A) '\u008a'
+	pC, // (0x8B) '\u008b'
+	pC, // (0x8C) '\u008c'
+	pC, // (0x8D) '\u008d'
+	pC, // (0x8E) '\u008e'
+	pC, // (0x8F) '\u008f'
+	pC, // (0x90) '\u0090'
+	pC, // (0x91) '\u0091'
+	pC, // (0x92) '\u0092'
+	pC, // (0x93) '\u0093'
+	pC, // (0x94) '\u0094'
+	pC, // (0x95) '\u0095'
+	pC, // (0x96) '\u0096'
+	pC, // (0x97) '\u0097'
+	pC, // (0x98) '\u0098'
+	pC, // (0x99) '\u0099'
+	pC, // (0x9A) '\u009a'
+	pC, // (0x9B) '\u009b'
+	pC, // (0x9C) '\u009c'
+	pC, // (0x9D) '\u009d'
+	pC, // (0x9E) '\u009e'
+	pC, // (0x9F) '\u009f'
+	pZ, // (0xA0) '\u00a0'
+	pP | pp, // (0xA1) '¡'
+	pS | pp, // (0xA2) '¢'
+	pS | pp, // (0xA3) '£'
+	pS | pp, // (0xA4) '¤'
+	pS | pp, // (0xA5) '¥'
+	pS | pp, // (0xA6) '¦'
+	pP | pp, // (0xA7) '§'
+	pS | pp, // (0xA8) '¨'
+	pS | pp, // (0xA9) '©'
+	pLo | pp, // (0xAA) 'ª'
+	pP | pp, // (0xAB) '«'
+	pS | pp, // (0xAC) '¬'
+	0, // (0xAD) '\u00ad'
+	pS | pp, // (0xAE) '®'
+	pS | pp, // (0xAF) '¯'
+	pS | pp, // (0xB0) '°'
+	pS | pp, // (0xB1) '±'
+	pN | pp, // (0xB2) '²'
+	pN | pp, // (0xB3) '³'
+	pS | pp, // (0xB4) '´'
+	pLl | pp, // (0xB5) 'µ'
+	pP | pp, // (0xB6) '¶'
+	pP | pp, // (0xB7) '·'
+	pS | pp, // (0xB8) '¸'
+	pN | pp, // (0xB9) '¹'
+	pLo | pp, // (0xBA) 'º'
+	pP | pp, // (0xBB) '»'
+	pN | pp, // (0xBC) '¼'
+	pN | pp, // (0xBD) '½'
+	pN | pp, // (0xBE) '¾'
+	pP | pp, // (0xBF) '¿'
+	pLu | pp, // (0xC0) 'À'
+	pLu | pp, // (0xC1) 'Á'
+	pLu | pp, // (0xC2) 'Â'
+	pLu | pp, // (0xC3) 'Ã'
+	pLu | pp, // (0xC4) 'Ä'
+	pLu | pp, // (0xC5) 'Å'
+	pLu | pp, // (0xC6) 'Æ'
+	pLu | pp, // (0xC7) 'Ç'
+	pLu | pp, // (0xC8) 'È'
+	pLu | pp, // (0xC9) 'É'
+	pLu | pp, // (0xCA) 'Ê'
+	pLu | pp, // (0xCB) 'Ë'
+	pLu | pp, // (0xCC) 'Ì'
+	pLu | pp, // (0xCD) 'Í'
+	pLu | pp, // (0xCE) 'Î'
+	pLu | pp, // (0xCF) 'Ï'
+	pLu | pp, // (0xD0) 'Ð'
+	pLu | pp, // (0xD1) 'Ñ'
+	pLu | pp, // (0xD2) 'Ò'
+	pLu | pp, // (0xD3) 'Ó'
+	pLu | pp, // (0xD4) 'Ô'
+	pLu | pp, // (0xD5) 'Õ'
+	pLu | pp, // (0xD6) 'Ö'
+	pS | pp, // (0xD7) '×'
+	pLu | pp, // (0xD8) 'Ø'
+	pLu | pp, // (0xD9) 'Ù'
+	pLu | pp, // (0xDA) 'Ú'
+	pLu | pp, // (0xDB) 'Û'
+	pLu | pp, // (0xDC) 'Ü'
+	pLu | pp, // (0xDD) 'Ý'
+	pLu | pp, // (0xDE) 'Þ'
+	pLl | pp, // (0xDF) 'ß'
+	pLl | pp, // (0xE0) 'à'
+	pLl | pp, // (0xE1) 'á'
+	pLl | pp, // (0xE2) 'â'
+	pLl | pp, // (0xE3) 'ã'
+	pLl | pp, // (0xE4) 'ä'
+	pLl | pp, // (0xE5) 'å'
+	pLl | pp, // (0xE6) 'æ'
+	pLl | pp, // (0xE7) 'ç'
+	pLl | pp, // (0xE8) 'è'
+	pLl | pp, // (0xE9) 'é'
+	pLl | pp, // (0xEA) 'ê'
+	pLl | pp, // (0xEB) 'ë'
+	pLl | pp, // (0xEC) 'ì'
+	pLl | pp, // (0xED) 'í'
+	pLl | pp, // (0xEE) 'î'
+	pLl | pp, // (0xEF) 'ï'
+	pLl | pp, // (0xF0) 'ð'
+	pLl | pp, // (0xF1) 'ñ'
+	pLl | pp, // (0xF2) 'ò'
+	pLl | pp, // (0xF3) 'ó'
+	pLl | pp, // (0xF4) 'ô'
+	pLl | pp, // (0xF5) 'õ'
+	pLl | pp, // (0xF6) 'ö'
+	pS | pp, // (0xF7) '÷'
+	pLl | pp, // (0xF8) 'ø'
+	pLl | pp, // (0xF9) 'ù'
+	pLl | pp, // (0xFA) 'ú'
+	pLl | pp, // (0xFB) 'û'
+	pLl | pp, // (0xFC) 'ü'
+	pLl | pp, // (0xFD) 'ý'
+	pLl | pp, // (0xFE) 'þ'
+	pLl | pp, // (0xFF) 'ÿ'
+};
+
+const fold_pair _case_orbit[] = {
+	{0x004B, 0x006B},
+	{0x0053, 0x0073},
+	{0x006B, 0x212A},
+	{0x0073, 0x017F},
+	{0x00B5, 0x039C},
+	{0x00C5, 0x00E5},
+	{0x00DF, 0x1E9E},
+	{0x00E5, 0x212B},
+	{0x0130, 0x0130},
+	{0x0131, 0x0131},
+	{0x017F, 0x0053},
+	{0x01C4, 0x01C5},
+	{0x01C5, 0x01C6},
+	{0x01C6, 0x01C4},
+	{0x01C7, 0x01C8},
+	{0x01C8, 0x01C9},
+	{0x01C9, 0x01C7},
+	{0x01CA, 0x01CB},
+	{0x01CB, 0x01CC},
+	{0x01CC, 0x01CA},
+	{0x01F1, 0x01F2},
+	{0x01F2, 0x01F3},
+	{0x01F3, 0x01F1},
+	{0x0345, 0x0399},
+	{0x0392, 0x03B2},
+	{0x0395, 0x03B5},
+	{0x0398, 0x03B8},
+	{0x0399, 0x03B9},
+	{0x039A, 0x03BA},
+	{0x039C, 0x03BC},
+	{0x03A0, 0x03C0},
+	{0x03A1, 0x03C1},
+	{0x03A3, 0x03C2},
+	{0x03A6, 0x03C6},
+	{0x03A9, 0x03C9},
+	{0x03B2, 0x03D0},
+	{0x03B5, 0x03F5},
+	{0x03B8, 0x03D1},
+	{0x03B9, 0x1FBE},
+	{0x03BA, 0x03F0},
+	{0x03BC, 0x00B5},
+	{0x03C0, 0x03D6},
+	{0x03C1, 0x03F1},
+	{0x03C2, 0x03C3},
+	{0x03C3, 0x03A3},
+	{0x03C6, 0x03D5},
+	{0x03C9, 0x2126},
+	{0x03D0, 0x0392},
+	{0x03D1, 0x03F4},
+	{0x03D5, 0x03A6},
+	{0x03D6, 0x03A0},
+	{0x03F0, 0x039A},
+	{0x03F1, 0x03A1},
+	{0x03F4, 0x0398},
+	{0x03F5, 0x0395},
+	{0x1E60, 0x1E61},
+	{0x1E61, 0x1E9B},
+	{0x1E9B, 0x1E60},
+	{0x1E9E, 0x00DF},
+	{0x1FBE, 0x0345},
+	{0x2126, 0x03A9},
+	{0x212A, 0x004B},
+	{0x212B, 0x00C5},
+};
+const slice<const fold_pair> case_orbit(_case_orbit);
+
