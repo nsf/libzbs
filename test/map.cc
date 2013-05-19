@@ -1,7 +1,7 @@
 #include "stf.hh"
 #include "zbs/map.hh"
 #include "zbs/string.hh"
-#include "zbs/fmt.hh"
+//#include "zbs/fmt.hh"
 
 STF_SUITE_NAME("zbs/map");
 
@@ -21,6 +21,7 @@ public:
 
 int oop::balance = 0;
 
+/*
 STF_TEST("map::map()") {
 	map<string, string> a;
 	for (int i = 0; i < 50; i++) {
@@ -44,6 +45,7 @@ STF_TEST("map::map()") {
 	}
 	STF_ASSERT(b.len() == 50);
 }
+*/
 
 STF_TEST("map::map(std::initializer_list<key_and_value<K, V>>)") {
 	map<string, string> a = {
