@@ -193,7 +193,7 @@ class map {
 		detail::free(old_buckets);
 	}
 
-	V &_find_or_insert(const K &key) {
+	V &_find_or_insert(K key) {
 		int hash = Hash()(key, _hash0);
 		if (_buckets == nullptr) {
 			_buckets = detail::malloc<_bucket>(1);
@@ -250,7 +250,7 @@ again:
 		*insert_top = top;
 		K *newk = _indirect<_indirect_key(), K>::insert(*insert_key);
 		V *newv = _indirect<_indirect_value(), V>::insert(*insert_value);
-		new (newk) K(key);
+		new (newk) K(std::move(key));
 		new (newv) V;
 		_count++;
 
@@ -298,8 +298,8 @@ public:
 
 	int len() const { return _count; }
 
-	V &operator[](const K &k) {
-		return _find_or_insert(k);
+	V &operator[](K k) {
+		return _find_or_insert(std::move(k));
 	}
 };
 
