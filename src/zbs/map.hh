@@ -283,6 +283,14 @@ public:
 		if (_buckets == nullptr)
 			return;
 
+		clear();
+		detail::free(_buckets);
+	}
+
+	void clear() {
+		if (_buckets == nullptr)
+			return;
+
 		for (int i = 0, n = 1 << _B; i < n; i++) {
 			_bucket &b = _buckets[i];
 			_bucket *next = b.overflow;
@@ -295,10 +303,11 @@ public:
 			}
 			b.free();
 		}
-		detail::free(_buckets);
+		_count = 0;
 	}
 
 	int len() const { return _count; }
+	int cap() const { return _load * (1 << _B); }
 
 	V &operator[](K k) {
 		return _find_or_insert(std::move(k));
