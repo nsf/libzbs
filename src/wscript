@@ -5,3 +5,8 @@ def build(bld):
 		target = 'zbs',
 		includes = '.. .',
 	)
+	bld.install_files(
+		'${PREFIX}/include',
+		bld.path.ant_glob("zbs/**/*.hh"),
+		relative_trick=True
+	)
