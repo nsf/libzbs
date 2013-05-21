@@ -258,7 +258,7 @@ again:
 	}
 
 public:
-	explicit map(int hint = 0) {
+	explicit map(int hint) {
 		while (hint > _bucket_size && hint > _load * (1 << _B))
 			_B++;
 
@@ -270,6 +270,8 @@ public:
 		}
 		_hash0 = detail::fastrand();
 	}
+
+	map(): map(0) {}
 
 	map(std::initializer_list<key_and_value<K, V>> r): map(r.size()) {
 		for (const auto &kv : r) {
