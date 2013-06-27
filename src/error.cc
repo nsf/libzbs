@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cstdarg>
 
+#include "zbs/fmt.hh"
+
 namespace zbs {
 
 //============================================================================
@@ -38,9 +40,14 @@ verbose_error::~verbose_error() {
 	}
 }
 
-void verbose_error::set(error_code code, const char*, ...) {
+void verbose_error::set(error_code code, const char *format, ...) {
+	va_list vl;
 	_code = code;
-	// TODO
+
+	va_start(vl, format);
+	auto s = fmt::vsprintf(format, vl);
+	va_end(vl);
+	_message = s.detach_unsafe();
 }
 
 const char *verbose_error::what() const {
