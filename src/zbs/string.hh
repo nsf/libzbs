@@ -142,7 +142,7 @@ public:
 
 	inline T *detach_unsafe() {
 		T *data = _data;
-		_data = nullptr;
+		_data = detail::char_traits<T>::empty_string();
 		_len = 0;
 		_cap = 0;
 		return data;
@@ -347,10 +347,20 @@ extern template class basic_string<char32_t>;
 // utf-8 string
 //============================================================================
 
+/// Container for a null-terminated sequence of bytes. Many methods and
+/// functions assume its contents are UTF-8 encoded. There are no invalid
+/// strings, all strings are valid in a sense that they are a sequence of zero
+/// or more bytes ending with a null byte.
 class string : public basic_string<char> {
 public:
+	/// Default constructor. Constructs an empty string.
 	string() = default;
+
+	/// Copy constructor. Constructs a copy of another string.
 	string(const string&) = default;
+
+	/// Move constructor. Uses the contents of another string to construct
+	/// a string.
 	string(string&&) = default;
 	~string() = default;
 	string &operator=(const string&) = default;
