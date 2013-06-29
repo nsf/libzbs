@@ -193,7 +193,8 @@ class map {
 		detail::free(old_buckets);
 	}
 
-	V &_find_or_insert(K key) {
+	template <typename Key>
+	V &_find_or_insert(Key &&key) {
 		int hash = Hash()(key, _hash0);
 		if (_buckets == nullptr) {
 			_buckets = detail::malloc<_bucket>(1);
@@ -250,7 +251,7 @@ again:
 		*insert_top = top;
 		K *newk = _indirect<_indirect_key(), K>::insert(*insert_key);
 		V *newv = _indirect<_indirect_value(), V>::insert(*insert_value);
-		new (newk) K(std::move(key));
+		new (newk) K(std::forward<Key>(key));
 		new (newv) V;
 		_count++;
 
@@ -287,6 +288,43 @@ public:
 		detail::free(_buckets);
 	}
 
+	V *lookup(const K &key) {
+		if (_buckets == nullptr || _count == 0) {
+			return nullptr;
+		}
+		int hash = Hash()(key, _hash0);
+		int bi = hash & ((1 << _B) - 1);
+		_bucket *b = _buckets + bi;
+		uint8 top = hash >> (sizeof(int) * 8 - 8);
+		if (top == 0)
+			top = 1;
+
+		for (;;) {
+			for (int i = 0; i < _bucket_size; i++) {
+				if (b->top_hash[i] != top)
+					continue;
+
+				if (!(key == b->key(i)))
+					continue;
+
+				return &b->value(i);
+			}
+
+			if (b->overflow == nullptr)
+				break;
+			b = b->overflow;
+		}
+		return nullptr;
+	}
+
+	V lookup(const K &key, V def) {
+		V *v = lookup(key);
+		if (!v) {
+			return def;
+		}
+		return *v;
+	}
+
 	void clear() {
 		if (_buckets == nullptr)
 			return;
@@ -309,9 +347,8 @@ public:
 	int len() const { return _count; }
 	int cap() const { return _load * (1 << _B); }
 
-	V &operator[](K k) {
-		return _find_or_insert(std::move(k));
-	}
+	V &operator[](const K &k) { return _find_or_insert(k); }
+	V &operator[](K &&k) { return _find_or_insert(std::move(k)); }
 };
 
 template <typename K, typename V, typename Hash>

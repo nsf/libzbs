@@ -17,6 +17,31 @@ public:
 	oop &operator=(const oop&) = default;
 };
 
+class move_only_str {
+public:
+	string str;
+
+	move_only_str(const char *r): str(r) {}
+
+	move_only_str() = delete;
+	move_only_str(const move_only_str&) = delete;
+	move_only_str(move_only_str&&) = default;
+	move_only_str &operator=(const move_only_str&) = delete;
+	move_only_str &operator=(move_only_str&&) = default;
+	bool operator==(const move_only_str &r) const { return str == r.str; }
+};
+
+namespace zbs {
+
+template <>
+struct hash<move_only_str> {
+	int operator()(const move_only_str &mos, int seed) {
+		return hash<string>()(mos.str, seed);
+	}
+};
+
+} // namespace zbs
+
 int oop::balance = 0;
 
 /*
@@ -87,6 +112,28 @@ STF_TEST("map_iter") {
 	}
 	STF_ASSERT(i == 5);
 	STF_ASSERT(a["Sandra Dee"] == "OOPS");
+}
+
+STF_TEST("move semantics") {
+	map<move_only_str, string> a;
+	a["hello"] = "world";
+	a["world"] = "hello";
+	auto w = a.lookup("hello");
+	STF_ASSERT(w != nullptr && *w == "world");
+}
+
+STF_TEST("map::lookup(const K&, V)") {
+	map<string, int> m;
+	m["a"] = 1;
+	m["b"] = 2;
+	m["c"] = 3;
+
+	auto x = m.lookup("a", -1);
+	STF_ASSERT(x == 1);
+	auto y = m.lookup("b", -1);
+	STF_ASSERT(y == 2);
+	auto z = m.lookup("d", -1);
+	STF_ASSERT(z == -1);
 }
 
 STF_TEST("oop ctor/dtor balance correctness") {
