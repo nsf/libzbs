@@ -1,3 +1,7 @@
+// This file may contain portions of the code derived/adopted from the Go
+// standard library, which is covered by a BSD-style license. You can find more
+// details in 3rdparty/go_license.txt file.
+
 #include "stf.hh"
 #include "zbs.hh"
 #include "zbs/unicode.hh"
