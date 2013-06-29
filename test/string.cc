@@ -1,8 +1,8 @@
 #include "stf.hh"
-#include "zbs/string.hh"
+#include "zbs.hh"
 #include <utility>
 
-STF_SUITE_NAME("zbs/string");
+STF_SUITE_NAME("zbs::string");
 
 STF_TEST("string::string()") {
 	// default ctor

@@ -1,4 +1,4 @@
-#include "zbs/slice.hh"
+#include "zbs/_slice.hh"
 
 namespace zbs {
 

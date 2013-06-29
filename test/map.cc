@@ -1,9 +1,7 @@
 #include "stf.hh"
-#include "zbs/map.hh"
-#include "zbs/string.hh"
-//#include "zbs/fmt.hh"
+#include "zbs.hh"
 
-STF_SUITE_NAME("zbs/map");
+STF_SUITE_NAME("zbs::map");
 
 using namespace zbs;
 

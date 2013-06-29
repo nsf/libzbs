@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "../types.hh"
-#include "../slice.hh"
+#include "../_types.hh"
+#include "../_slice.hh"
 
 namespace zbs {
 namespace unicode {

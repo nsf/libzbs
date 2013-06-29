@@ -1,9 +1,8 @@
 #include "stf.hh"
+#include "zbs.hh"
 #include "zbs/slices.hh"
-#include "zbs/string.hh"
-#include "zbs/vector.hh"
 
-STF_SUITE_NAME("zbs/slices");
+STF_SUITE_NAME("zbs::slices");
 
 using namespace zbs;
 

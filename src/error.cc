@@ -1,4 +1,4 @@
-#include "zbs/error.hh"
+#include "zbs/_error.hh"
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>

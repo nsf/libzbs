@@ -2,8 +2,8 @@
 // license, you can find more details in 3rdparty/musl_license.txt file.
 
 #include "zbs/fmt.hh"
-#include "zbs/vector.hh"
-#include "zbs/types.hh"
+#include "zbs/_vector.hh"
+#include "zbs/_types.hh"
 
 #include <errno.h>
 #include <ctype.h>

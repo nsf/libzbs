@@ -1,7 +1,7 @@
 #include "zbs/_types.hh"
 #include "zbs/_error.hh"
 #include "zbs/_slice.hh"
-#include "zbs/_funcref.hh"
+#include "zbs/_func.hh"
 #include "zbs/_string.hh"
 #include "zbs/_vector.hh"
 #include "zbs/_map.hh"

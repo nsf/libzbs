@@ -1,4 +1,4 @@
-#include "zbs/string.hh"
+#include "zbs/_string.hh"
 #include "zbs/unicode/utf8.hh"
 
 namespace utf8 = zbs::unicode::utf8;

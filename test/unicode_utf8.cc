@@ -3,11 +3,10 @@
 // details in 3rdparty/go_license.txt file.
 
 #include "stf.hh"
-#include "zbs/vector.hh"
-#include "zbs/string.hh"
+#include "zbs.hh"
 #include "zbs/unicode/utf8.hh"
 
-STF_SUITE_NAME("zbs/unicode/utf8");
+STF_SUITE_NAME("zbs::unicode::utf8");
 
 using namespace zbs;
 namespace utf8 = unicode::utf8;

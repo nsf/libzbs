@@ -7,6 +7,6 @@ def build(bld):
 	)
 	bld.install_files(
 		'${PREFIX}/include',
-		bld.path.ant_glob("zbs/**/*.hh"),
+		bld.path.ant_glob("zbs/**/*.hh") + [bld.path.find_node("zbs.hh")],
 		relative_trick=True
 	)

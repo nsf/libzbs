@@ -8,7 +8,7 @@
 #include <utility>
 
 #include "_utils.hh"
-#include "slice.hh"
+#include "_slice.hh"
 
 namespace zbs {
 namespace slices {

@@ -1,9 +1,9 @@
 #include "stf.hh"
+#include "zbs.hh"
 #include "zbs/unicode.hh"
 #include "zbs/unicode/utf8.hh"
-#include "zbs/string.hh"
 
-STF_SUITE_NAME("zbs/unicode");
+STF_SUITE_NAME("zbs::unicode");
 
 using namespace zbs;
 namespace utf8 = unicode::utf8;

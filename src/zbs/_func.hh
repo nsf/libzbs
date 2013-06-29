@@ -6,7 +6,7 @@
 
 namespace zbs {
 
-template <typename T> class funcref;
+template <typename T> class func;
 
 // I think at the moment it violates a couple of C++ rules. A non-POD object is
 // being constructed, but never destructed (I know the destructor is a no-op,
@@ -17,10 +17,10 @@ template <typename T> class funcref;
 // for now.
 
 template <typename R, typename ...Args>
-class funcref<R (Args...)> {
+class func<R (Args...)> {
 	class _impl {
 	public:
-		virtual R operator()(Args...) = 0;
+		virtual R operator()(Args...) const = 0;
 	};
 
 	class _func_impl : public _impl {
@@ -28,7 +28,7 @@ class funcref<R (Args...)> {
 
 	public:
 		constexpr _func_impl(R (*fp)(Args...)): _fp(fp) {}
-		R operator()(Args ...args) override {
+		R operator()(Args ...args) const override {
 			return (*_fp)(std::forward<Args>(args)...);
 		}
 	};
@@ -39,7 +39,7 @@ class funcref<R (Args...)> {
 
 	public:
 		constexpr _object_impl(T &obj): _obj(obj) {}
-		R operator()(Args ...args) override {
+		R operator()(Args ...args) const override {
 			return _obj(std::forward<Args>(args)...);
 		}
 	};
@@ -52,21 +52,21 @@ class funcref<R (Args...)> {
 	byte _data[sizeof(_sizer)];
 public:
 	template <typename T>
-	funcref(T &obj) {
+	func(T &obj) {
 		static_assert(sizeof(_object_impl<T>) == sizeof(_object_impl<int>),
 			"all T& should have no impact on _object_impl size");
 		new (_data) _object_impl<T>(obj);
 	}
 	template <typename T>
-	funcref(const T &obj) {
+	func(const T &obj) {
 		static_assert(sizeof(_object_impl<const T>) == sizeof(_object_impl<int>),
 			"all T& should have no impact on _object_impl size");
 		new (_data) _object_impl<const T>(obj);
 	}
-	funcref(R (*fp)(Args...)) {
+	func(R (*fp)(Args...)) {
 		new (_data) _func_impl(fp);
 	}
-	R operator()(Args ...args) {
+	R operator()(Args ...args) const {
 		return (*(_impl*)_data)(std::forward<Args>(args)...);
 	}
 };

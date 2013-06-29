@@ -1,8 +1,8 @@
 #include "stf.hh"
-#include "zbs/vector.hh"
+#include "zbs.hh"
 #include <utility>
 
-STF_SUITE_NAME("zbs/vector");
+STF_SUITE_NAME("zbs::vector");
 
 bool check_vector(zbs::vector<int> &v, const zbs::vector<int> &gold) {
 	// sanity check

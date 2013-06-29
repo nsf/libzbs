@@ -1,8 +1,8 @@
 #include "stf.hh"
-#include "zbs/error.hh"
+#include "zbs.hh"
 #include <cstring>
 
-STF_SUITE_NAME("zbs/error");
+STF_SUITE_NAME("zbs::error");
 
 STF_TEST("random") {
 	zbs::error a;

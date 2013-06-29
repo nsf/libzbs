@@ -1,7 +1,5 @@
 #include "stf.hh"
-#include "zbs/slice.hh"
-#include "zbs/string.hh"
-#include "zbs/vector.hh"
+#include "zbs.hh"
 
 STF_SUITE_NAME("zbs/slice");
 

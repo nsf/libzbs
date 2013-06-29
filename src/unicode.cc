@@ -3,7 +3,7 @@
 // details in 3rdparty/go_license.txt file.
 
 #include "zbs/unicode.hh"
-#include "zbs/slice.hh"
+#include "zbs/_slice.hh"
 
 namespace zbs {
 namespace unicode {
