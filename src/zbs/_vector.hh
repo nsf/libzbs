@@ -590,4 +590,6 @@ T *begin(vector<T> &v) { return v.data(); }
 template <typename T>
 T *end(vector<T> &v) { return v.data()+v.len(); }
 
+// TODO: provide stuff for rvalue-refs
+
 } // namespace zbs
