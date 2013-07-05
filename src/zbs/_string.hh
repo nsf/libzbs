@@ -157,6 +157,7 @@ public:
 	}
 
 	int len() const { return _len; }
+	int byte_len() const { return _len * sizeof(T); }
 	int cap() const { return _cap; }
 	T *data() { return _data; }
 	const T *data() const { return _data; }

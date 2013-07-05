@@ -28,6 +28,7 @@ public:										\
 	slice &operator=(const slice &r) = default;				\
 	constexpr explicit operator bool() const { return _len != 0; }		\
 	constexpr int len() const { return _len; }				\
+	constexpr int byte_len() const { return _len * sizeof(T); }		\
 	constexpr const T *data() const { return _data; }			\
 	slice<const T> sub() const {						\
 		return {_data, _len};						\
@@ -71,6 +72,7 @@ public:
 		return _data[idx];
 	}
 	constexpr int len() const { return _len; }
+	constexpr int byte_len() const { return _len * sizeof(T); }
 	T *data() { return _data; }
 	constexpr const T *data() const { return _data; }
 	slice sub() {

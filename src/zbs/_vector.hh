@@ -280,6 +280,8 @@ public:
 	/// moment.
 	inline int len() const { return _len; }
 
+	inline int byte_len() const { return _len * sizeof(T); }
+
 	/// Returns an amount of elements the vector may hold without
 	/// performing reallocations.
 	inline int cap() const { return _cap; }
