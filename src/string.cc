@@ -103,14 +103,14 @@ int hash<string>::operator()(const string &s, int seed) {
 }
 
 string_iter::string_iter(slice<const char> s): _s(s), _r(0), _offset(0) {
-	_r = utf8::decode_rune(_s);
+	_r = utf8::decode_rune(_s).rune;
 }
 
 string_iter &string_iter::operator++() {
 	const int len = utf8::rune_len(_r);
 	_s = _s.sub(len);
 	_offset += len;
-	_r = utf8::decode_rune(_s);
+	_r = utf8::decode_rune(_s).rune;
 	return *this;
 }
 
@@ -130,7 +130,7 @@ string_iter end(const string&) {
 	return string_iter();
 }
 
-rune_and_offset string_iter::operator*() const {
+offset_rune string_iter::operator*() const {
 	return {_r, _offset};
 }
 

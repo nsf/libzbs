@@ -15,4 +15,14 @@ typedef int64_t  int64;
 typedef uint8    byte;
 typedef int32    rune;
 
+struct offset_rune {
+	zbs::rune rune;
+	int offset;
+};
+
+struct sized_rune {
+	zbs::rune rune;
+	int size;
+};
+
 } // namespace zbs

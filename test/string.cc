@@ -264,7 +264,7 @@ STF_TEST("string_iter") {
 
 	string a = "проверка";
 	int i = 0;
-	constexpr rune_and_offset table[] = {
+	constexpr offset_rune table[] = {
 		{U'п', 0},
 		{U'р', 2},
 		{U'о', 4},

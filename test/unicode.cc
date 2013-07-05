@@ -329,11 +329,11 @@ const string simple_fold_tests[] = {
 
 STF_TEST("unicode::simple_fold(rune)") {
 	for (const auto &test : simple_fold_tests) {
-		auto r = utf8::decode_last_rune(test);
+		sized_rune r = utf8::decode_last_rune(test);
 		for (const auto &it : test) {
-			auto fr = unicode::simple_fold(r);
+			auto fr = unicode::simple_fold(r.rune);
 			STF_ASSERT(fr == it.rune);
-			r = it.rune;
+			r.rune = it.rune;
 		}
 	}
 }

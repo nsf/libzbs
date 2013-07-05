@@ -161,15 +161,14 @@ STF_TEST("utf8::encode_rune(slice<char>, rune)") {
 
 STF_TEST("utf8::decode_rune(slice<const char>, int*)") {
 	for (const auto &m : utf8map) {
-		int size;
 		string str = m.str;
-		rune r = utf8::decode_rune(str, &size);
-		STF_ASSERT(r == m.r && size == str.len());
+		sized_rune r = utf8::decode_rune(str);
+		STF_ASSERT(r.rune == m.r && r.size == str.len());
 
 		// make sure trailing byte works
 		str.append({"\0", 1});
-		r = utf8::decode_rune(str, &size);
-		STF_ASSERT(r == m.r && size == str.len()-1);
+		r = utf8::decode_rune(str);
+		STF_ASSERT(r.rune == m.r && r.size == str.len()-1);
 
 		// remove trailing \0
 		str.remove(str.len()-1);
@@ -180,8 +179,8 @@ STF_TEST("utf8::decode_rune(slice<const char>, int*)") {
 			wantsize = 0;
 		}
 
-		r = utf8::decode_rune(str.sub(0, str.len()-1), &size);
-		STF_ASSERT(r == utf8::rune_error && size == wantsize);
+		r = utf8::decode_rune(str.sub(0, str.len()-1));
+		STF_ASSERT(r.rune == utf8::rune_error && r.size == wantsize);
 
 		// make sure bad sequences fail
 		if (str.len() == 1) {
@@ -189,15 +188,14 @@ STF_TEST("utf8::decode_rune(slice<const char>, int*)") {
 		} else {
 			str[str.len()-1] = 0x7F;
 		}
-		r = utf8::decode_rune(str, &size);
-		STF_ASSERT(r == utf8::rune_error && size == 1);
+		r = utf8::decode_rune(str);
+		STF_ASSERT(r.rune == utf8::rune_error && r.size == 1);
 	}
 
 	// surrogate runes
 	for (const auto &m : surrogate_map) {
-		int size;
-		rune r = utf8::decode_rune(m.str, &size);
-		STF_ASSERT(r == utf8::rune_error && size == 1);
+		sized_rune r = utf8::decode_rune(m.str);
+		STF_ASSERT(r.rune == utf8::rune_error && r.size == 1);
 	}
 }
 
@@ -209,20 +207,18 @@ bool test_sequence(slice<const char> s) {
 	vector<info> index(s.len());
 	int j = 0, i = 0;
 	while (i < s.len()) {
-		int size;
-		rune r = utf8::decode_rune(s.sub(i), &size);
-		index[j++] = {i, r};
-		i += size;
+		sized_rune r = utf8::decode_rune(s.sub(i));
+		index[j++] = {i, r.rune};
+		i += r.size;
 	}
 	j--;
 	i = s.len();
 	while (i > 0) {
-		int size;
-		rune r = utf8::decode_last_rune(s.sub(0, i), &size);
-		if (index[j].r != r) {
+		sized_rune r = utf8::decode_last_rune(s.sub(0, i));
+		if (index[j].r != r.rune) {
 			return false;
 		}
-		i -= size;
+		i -= r.size;
 		if (index[j].index != i) {
 			return false;
 		}

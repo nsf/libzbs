@@ -128,23 +128,20 @@ bool full_rune(slice<const char> s) {
 	return !decode_rune_internal(s).incomplete;
 }
 
-rune decode_rune(slice<const char> s, int *size) {
+sized_rune decode_rune(slice<const char> s) {
 	auto r = decode_rune_internal(s);
-	OPTRET(size) = r.size;
-	return r.r;
+	return {r.r, r.size};
 }
 
-rune decode_last_rune(slice<const char> s, int *size) {
+sized_rune decode_last_rune(slice<const char> s) {
 	int end = s.len();
 	if (end == 0) {
-		OPTRET(size) = 0;
-		return rune_error;
+		return {rune_error, 0};
 	}
 	int start = end - 1;
 	rune r = uint8(s[start]);
 	if (r < rune_self) {
-		OPTRET(size) = 1;
-		return r;
+		return {r, 1};
 	}
 
 	// guard against O(n^2) behavior when traversing
@@ -167,11 +164,9 @@ rune decode_last_rune(slice<const char> s, int *size) {
 
 	auto dr = decode_rune_internal(s.sub(start));
 	if (start + dr.size != end) {
-		OPTRET(size) = 1;
-		return rune_error;
+		return {rune_error, 1};
 	}
-	OPTRET(size) = dr.size;
-	return dr.r;
+	return {dr.r, dr.size};
 }
 
 int rune_len(rune r) {
@@ -233,9 +228,7 @@ int rune_count(slice<const char> s) {
 		if (uint8(s[i]) < rune_self) {
 			i++;
 		} else {
-			int size;
-			decode_rune(s.sub(i), &size);
-			i += size;
+			i += decode_rune(s.sub(i)).size;
 		}
 		n++;
 	}
@@ -252,8 +245,7 @@ bool valid(slice<const char> s) {
 		if (uint8(s[i]) < rune_self) {
 			i++;
 		} else {
-			int size;
-			decode_rune(s.sub(i), &size);
+			int size = decode_rune(s.sub(i)).size;
 			if (size == 1) {
 				// All valid runes of size 1 (those
 				// below rune_self) were handled above.

@@ -412,11 +412,6 @@ struct hash<string> {
 };
 
 // for each loop support
-struct rune_and_offset {
-	zbs::rune rune;
-	int offset;
-};
-
 class string_iter {
 	slice<const char> _s;
 	rune _r;
@@ -428,7 +423,7 @@ public:
 	string_iter &operator++();
 	bool operator==(const string_iter &r) const;
 	bool operator!=(const string_iter &r) const;
-	rune_and_offset operator*() const;
+	offset_rune operator*() const;
 };
 
 // these are useful for manual init, like:

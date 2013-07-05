@@ -42,17 +42,17 @@ bool equal_fold(slice<const char> a, slice<const char> b) {
 			ar = a[0];
 			a = a.sub(1);
 		} else {
-			int size;
-			ar = utf8::decode_rune(a, &size);
-			a = a.sub(size);
+			sized_rune r = utf8::decode_rune(a);
+			ar = r.rune;
+			a = a.sub(r.size);
 		}
 		if (uint8(b[0]) < utf8::rune_self) {
 			br = b[0];
 			b = b.sub(1);
 		} else {
-			int size;
-			br = utf8::decode_rune(b, &size);
-			b = b.sub(size);
+			sized_rune r = utf8::decode_rune(b);
+			br = r.rune;
+			b = b.sub(r.size);
 		}
 
 		// if they match, keep going; if not, return false
@@ -158,15 +158,14 @@ int index_any(slice<const char> s, slice<const char> chars) {
 static int index_func_internal(slice<const char> s, func<bool(rune)> f, bool truth) {
 	int start = 0;
 	while (start < s.len()) {
-		int wid = 1;
-		rune r = s[start];
-		if (uint8(r) >= utf8::rune_self) {
-			r = utf8::decode_rune(s.sub(start), &wid);
+		sized_rune r {s[start], 1};
+		if (uint8(r.rune) >= utf8::rune_self) {
+			r = utf8::decode_rune(s.sub(start));
 		}
-		if (f(r) == truth) {
+		if (f(r.rune) == truth) {
 			return start;
 		}
-		start += wid;
+		start += r.size;
 	}
 	return -1;
 }
@@ -226,11 +225,10 @@ int last_index_any(slice<const char> s, slice<const char> chars) {
 
 	// TODO: use string_reverse_iter when it's ready
 	for (int i = s.len(); i > 0;) {
-		int size;
-		rune r = utf8::decode_last_rune(s.sub(0, i), &size);
-		i -= size;
+		sized_rune r = utf8::decode_last_rune(s.sub(0, i));
+		i -= r.size;
 		for (const auto &it : string_iter(chars)) {
-			if (r == it.rune) {
+			if (r.rune == it.rune) {
 				return i;
 			}
 		}
@@ -241,10 +239,9 @@ int last_index_any(slice<const char> s, slice<const char> chars) {
 static int last_index_func_internal(slice<const char> s, func<bool(rune)> f, bool truth) {
 	// TODO: use string_reverse_iter when it's ready
 	for (int i = s.len(); i > 0;) {
-		int size;
-		rune r = utf8::decode_last_rune(s.sub(0, i), &size);
-		i -= size;
-		if (f(r) == truth) {
+		sized_rune r = utf8::decode_last_rune(s.sub(0, i));
+		i -= r.size;
+		if (f(r.rune) == truth) {
 			return i;
 		}
 	}
@@ -300,9 +297,7 @@ string replace(slice<const char> s, slice<const char> old, slice<const char> _ne
 		int j = start;
 		if (old.len() == 0) {
 			if (i > 0) {
-				int size;
-				utf8::decode_rune(s.sub(start), &size);
-				j += size;
+				j += utf8::decode_rune(s.sub(start)).size;
 			}
 		} else {
 			j += index(s.sub(start), old);
@@ -329,14 +324,13 @@ static vector<string> explode(slice<const char> s, int n) {
 
 	int cur = 0;
 	for (int i = 0; i < n-1; i++) {
-		int size;
-		rune ch = utf8::decode_rune(s.sub(cur), &size);
-		if (ch == utf8::rune_error) {
+		sized_rune r = utf8::decode_rune(s.sub(cur));
+		if (r.rune == utf8::rune_error) {
 			out.append("\uFFFD");
 		} else {
-			out.append(s.sub(cur, cur+size));
+			out.append(s.sub(cur, cur+r.size));
 		}
-		cur += size;
+		cur += r.size;
 	}
 	if (cur < s.len()) {
 		out.append(s.sub(cur));
@@ -475,9 +469,7 @@ slice<const char> trim_right(slice<const char> s, slice<const char> cutset) {
 slice<const char> trim_right_func(slice<const char> s, func<bool(rune)> f) {
 	int i = last_index_func_internal(s, f, false);
 	if (i >= 0 && uint8(s[i]) >= utf8::rune_self) {
-		int wid;
-		utf8::decode_rune(s.sub(i), &wid);
-		i += wid;
+		i += utf8::decode_rune(s.sub(i)).size;
 	} else {
 		i++;
 	}

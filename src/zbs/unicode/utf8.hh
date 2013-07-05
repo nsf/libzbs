@@ -29,7 +29,7 @@ const int utf_max = 4;
 /// incorrect UTF-8, encodes a rune that is out of range, or is not the
 /// shortest possible UTF-8 encoding for the value. No other validation is
 /// performed.
-rune decode_last_rune(slice<const char> s, int *size = nullptr);
+sized_rune decode_last_rune(slice<const char> s);
 
 /// Unpacks the first UTF-8 encoding in `s` and returns the rune and its width
 /// in bytes. If the encoding is invalid, it returns (#rune_error, 1), an
@@ -37,7 +37,7 @@ rune decode_last_rune(slice<const char> s, int *size = nullptr);
 /// incorrect UTF-8, encodes a rune that is out of range, or is not the
 /// shortest possible UTF-8 encoding for the value. No other validation is
 /// performed.
-rune decode_rune(slice<const char> s, int *size = nullptr);
+sized_rune decode_rune(slice<const char> s);
 
 /// Writes into `s` (which must be large enough) the UTF-8 encoding for the
 /// rune. It returns the number of bytes written.
