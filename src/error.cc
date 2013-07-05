@@ -27,7 +27,7 @@ error::operator bool() const {
 	return (bool)_code;
 }
 
-static error_domain generic_error_domain;
+error_domain generic_error_domain;
 error_code generic_error_code(generic_error_domain, 1);
 
 //============================================================================
