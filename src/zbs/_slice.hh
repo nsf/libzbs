@@ -305,4 +305,19 @@ T *begin(slice<T> s) { return s.data(); }
 template <typename T>
 T *end(slice<T> s) { return s.data()+s.len(); }
 
+template <typename T, typename U>
+slice<T> slice_cast(slice<U> s) {
+	static_assert(
+		(std::is_const<T>::value && std::is_const<U>::value) ||
+		(std::is_const<T>::value && !std::is_const<U>::value) ||
+		(!std::is_const<T>::value && !std::is_const<U>::value),
+		"const to non-const slice conversion is forbidden"
+	);
+	static_assert(std::is_pod<T>::value && std::is_pod<U>::value,
+		"slice_cast works only with POD types for safety reasons");
+
+	constexpr double ratio = (double)sizeof(U) / (double)sizeof(T);
+	return slice<T>((T*)s.data(), s.len() * ratio);
+}
+
 } // namespace zbs
