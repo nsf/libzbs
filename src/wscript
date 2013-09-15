@@ -11,6 +11,7 @@ def build(bld):
 		name = 'libzbs_static',
 		target = 'zbs',
 		includes = '.. .',
+		install_path = "${LIBDIR}",
 	)
 	bld.install_files(
 		'${PREFIX}/include',
