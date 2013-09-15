@@ -2,6 +2,13 @@ def build(bld):
 	lib_sources = bld.path.ant_glob("**/*.cc")
 	bld.shlib(
 		source = lib_sources,
+		name = 'libzbs_shared',
+		target = 'zbs',
+		includes = '.. .',
+	)
+	bld.stlib(
+		source = lib_sources,
+		name = 'libzbs_static',
 		target = 'zbs',
 		includes = '.. .',
 	)

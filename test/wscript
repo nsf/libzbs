@@ -6,7 +6,7 @@ def build(bld):
 			source = [t],
 			target = 'test_' + t.name[:-3],
 			includes = '../src ..',
-			use = 'zbs',
+			use = 'libzbs_static',
 			install_path = None,
 		)
 
