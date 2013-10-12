@@ -18,56 +18,41 @@ template <typename T> class func;
 
 template <typename R, typename ...Args>
 class func<R (Args...)> {
-	class _impl {
-	public:
-		virtual R operator()(Args...) const = 0;
-	};
-
-	class _func_impl : public _impl {
-		R (*_fp)(Args...);
-
-	public:
-		constexpr _func_impl(R (*fp)(Args...)): _fp(fp) {}
-		R operator()(Args ...args) const override {
-			return (*_fp)(std::forward<Args>(args)...);
-		}
-	};
+	static R _invoke_func(void *data, Args &&...args) {
+		auto fp = reinterpret_cast<R (*)(Args...)>(data);
+		return (*fp)(std::forward<Args>(args)...);
+	}
 
 	template <typename T>
-	class _object_impl : public _impl {
-		T &_obj;
+	static R _invoke_obj(void *data, Args &&...args) {
+		auto obj = reinterpret_cast<T*>(data);
+		return (*obj)(std::forward<Args>(args)...);
+	}
 
-	public:
-		constexpr _object_impl(T &obj): _obj(obj) {}
-		R operator()(Args ...args) const override {
-			return _obj(std::forward<Args>(args)...);
-		}
-	};
+	template <typename T>
+	static R _invoke_const_obj(void *data, Args &&...args) {
+		auto obj = reinterpret_cast<const T*>(data);
+		return (*obj)(std::forward<Args>(args)...);
+	}
 
-	union _sizer {
-		_func_impl _1;
-		_object_impl<int> _2;
-	};
+	R (*_invoker)(void*, Args&&...);
+	void *_data;
 
-	byte _data[sizeof(_sizer)];
 public:
 	template <typename T>
-	func(T &obj) {
-		static_assert(sizeof(_object_impl<T>) == sizeof(_object_impl<int>),
-			"all T& should have no impact on _object_impl size");
-		new (_data) _object_impl<T>(obj);
-	}
+	func(T &obj): _invoker(_invoke_obj<T>),
+		_data(reinterpret_cast<void*>(&obj)) {}
 	template <typename T>
-	func(const T &obj) {
-		static_assert(sizeof(_object_impl<const T>) == sizeof(_object_impl<int>),
-			"all T& should have no impact on _object_impl size");
-		new (_data) _object_impl<const T>(obj);
-	}
-	func(R (*fp)(Args...)) {
-		new (_data) _func_impl(fp);
-	}
+	func(const T &obj): _invoker(_invoke_const_obj<T>),
+		_data(reinterpret_cast<void*>(const_cast<T*>(&obj))) {}
+	func(R (*fp)(Args...)): _invoker(_invoke_func),
+		_data(reinterpret_cast<void*>(fp)) {}
+	func(const func&) = default;
+	func(func&&) = default;
+	func &operator=(const func&) = default;
+	func &operator=(func&&) = default;
 	R operator()(Args ...args) const {
-		return (*(_impl*)_data)(std::forward<Args>(args)...);
+		return (*_invoker)(_data, std::forward<Args>(args)...);
 	}
 };
 
