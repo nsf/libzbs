@@ -8,14 +8,6 @@ namespace zbs {
 
 template <typename T> class func;
 
-// I think at the moment it violates a couple of C++ rules. A non-POD object is
-// being constructed, but never destructed (I know the destructor is a no-op,
-// but anyway). And a non-POD object is being memcpy'ed without using a copy
-// constructor/operator, I assume it's ok to do so, because essentially we only
-// copy two pointers here (the vtable pointer and the pointer of one of the
-// implementations). There are ways to avoid that, but let's leave it like that
-// for now.
-
 template <typename R, typename ...Args>
 class func<R (Args...)> {
 	static R _invoke_func(void *data, Args &&...args) {
