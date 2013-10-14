@@ -1,4 +1,5 @@
 #include "zbs/_types.hh"
+#include "zbs/_optional.hh"
 #include "zbs/_error.hh"
 #include "zbs/_slice.hh"
 #include "zbs/_func.hh"
