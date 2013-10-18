@@ -480,7 +480,7 @@ public:
 
 	/// Inserts the element `elem` at the specified position `idx`.
 	inline void insert(int idx, T &&elem) {
-		pinsert(idx, elem);
+		pinsert(idx, std::move(elem));
 	}
 
 	/// Appends a copy of the elements from the slice `s` to the end of the
@@ -496,7 +496,7 @@ public:
 
 	/// Appends the element `elem` to the end of the vector.
 	inline void append(T &&elem) {
-		pappend(elem);
+		pappend(std::move(elem));
 	}
 
 	/// Removes the slice [`begin`, `end`) of elements from the vector.
