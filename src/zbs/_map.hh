@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <cstdlib>
 #include <type_traits>
 #include <initializer_list>
@@ -33,12 +34,17 @@ struct key_and_value {
 	V value;
 };
 
-template <typename K, typename V, typename Hash>
+template <typename T>
 class map_iter;
 
 template <typename K, typename V, typename Hash = hash<K>>
 class map {
-	friend class map_iter<K, V, Hash>;
+	friend class map_iter<map<K, V, Hash>>;
+	friend class map_iter<const map<K, V, Hash>>;
+
+	using key_type = K;
+	using value_type = V;
+	using hash_type = Hash;
 
 	static constexpr float _load = 6.5;
 	static constexpr int _bucket_size = 8;
@@ -103,7 +109,7 @@ class map {
 
 		void clear() {
 			static_assert(_bucket_size == 8, "bucket_size != 8");
-			*(uint64*)top_hash = 0;
+			std::memset(top_hash, 0, _bucket_size);
 			overflow = nullptr;
 		}
 
@@ -194,7 +200,44 @@ class map {
 	}
 
 	template <typename Key>
-	V &_find_or_insert(Key &&key) {
+	VV *_lookup(const Key &key,
+		uint8 **top_out = nullptr,
+		KK **key_out = nullptr) const
+	{
+		if (_count == 0) {
+			return nullptr;
+		}
+		int hash = Hash()(key, _hash0);
+		int bi = hash & ((1 << _B) - 1);
+		_bucket *b = _buckets + bi;
+		uint8 top = hash >> (sizeof(int) * 8 - 8);
+		if (top == 0)
+			top = 1;
+
+		for (;;) {
+			for (int i = 0; i < _bucket_size; i++) {
+				if (b->top_hash[i] != top)
+					continue;
+
+				if (!(key == b->key(i)))
+					continue;
+
+				if (top_out)
+					*top_out = &b->top_hash[i];
+				if (key_out)
+					*key_out = &b->keys[i];
+				return &b->values[i];
+			}
+
+			if (b->overflow == nullptr)
+				break;
+			b = b->overflow;
+		}
+		return nullptr;
+	}
+
+	template <typename Key>
+	V &_lookup_or_insert(Key &&key) {
 		int hash = Hash()(key, _hash0);
 		if (_buckets == nullptr) {
 			_buckets = detail::malloc<_bucket>(1);
@@ -280,6 +323,17 @@ public:
 		}
 	}
 
+	map(const map&) = delete;
+
+	map(map &&r): _hash0(r._hash0), _count(r._count),
+		_B(r._B), _buckets(r._buckets)
+	{
+		r._hash0 = 0;
+		r._count = 0;
+		r._B = 0;
+		r._buckets = nullptr;
+	}
+
 	~map() {
 		if (_buckets == nullptr)
 			return;
@@ -288,41 +342,57 @@ public:
 		detail::free(_buckets);
 	}
 
-	V *lookup(const K &key) {
-		if (_buckets == nullptr || _count == 0) {
-			return nullptr;
+	map &operator=(const map&) = delete;
+
+	map &operator=(map &&r) {
+		if (_buckets != nullptr) {
+			clear();
+			detail::free(_buckets);
 		}
-		int hash = Hash()(key, _hash0);
-		int bi = hash & ((1 << _B) - 1);
-		_bucket *b = _buckets + bi;
-		uint8 top = hash >> (sizeof(int) * 8 - 8);
-		if (top == 0)
-			top = 1;
 
-		for (;;) {
-			for (int i = 0; i < _bucket_size; i++) {
-				if (b->top_hash[i] != top)
-					continue;
+		_hash0 = r._hash0;
+		_count = r._count;
+		_B = r._B;
+		_buckets = r._buckets;
 
-				if (!(key == b->key(i)))
-					continue;
+		r._hash0 = 0;
+		r._count = 0;
+		r._B = 0;
+		r._buckets = nullptr;
 
-				return &b->value(i);
-			}
-
-			if (b->overflow == nullptr)
-				break;
-			b = b->overflow;
-		}
-		return nullptr;
+		return *this;
 	}
 
-	V lookup(const K &key, V def) {
-		V *v = lookup(key);
-		if (!v) {
-			return def;
-		}
-		return *v;
+	template <typename Key>
+	V *lookup(const Key &key) {
+		VV *v = _lookup(key);
+		return v ? &_indirect<_indirect_value(), V>::get(*v) : nullptr;
+	}
+
+	template <typename Key>
+	const V *lookup(const Key &key) const {
+		VV *v = _lookup(key);
+		return v ? &_indirect<_indirect_value(), V>::get(*v) : nullptr;
+	}
+
+	template <typename Key>
+	V lookup(const Key &key, V def) const {
+		VV *v = _lookup(key);
+		return v ? _indirect<_indirect_value(), V>::get(*v) : def;
+	}
+
+	template <typename Key>
+	void remove(const Key &key) {
+		uint8 *top;
+		KK *k;
+		VV *v = _lookup(key, &top, &k);
+		if (!v)
+			return;
+
+		*top = 0;
+		_indirect<_indirect_key(), K>::destroy(*k);
+		_indirect<_indirect_value(), V>::destroy(*v);
+		_count--;
 	}
 
 	void clear() {
@@ -347,14 +417,16 @@ public:
 	int len() const { return _count; }
 	int cap() const { return _load * (1 << _B); }
 
-	V &operator[](const K &k) { return _find_or_insert(k); }
-	V &operator[](K &&k) { return _find_or_insert(std::move(k)); }
+	V &operator[](const K &k) { return _lookup_or_insert(k); }
+	V &operator[](K &&k) { return _lookup_or_insert(std::move(k)); }
 };
 
-template <typename K, typename V, typename Hash>
+template <typename T>
 class map_iter {
-	typename map<K, V, Hash>::_bucket *_buckets;
-	typename map<K, V, Hash>::_bucket *_bucket;
+	using K = typename T::key_type;
+	using V = typename T::value_type;
+	typename T::_bucket *_buckets;
+	typename T::_bucket *_bucket;
 	int _buckets_n;
 	int _bucket_i;
 	int _i;
@@ -366,7 +438,7 @@ class map_iter {
 
 		for (;;) {
 			_i++;
-			if (_i == map<K, V, Hash>::_bucket_size) {
+			if (_i == T::_bucket_size) {
 				// done with current bucket, try next overflow
 				_bucket = _bucket->overflow;
 				_i = 0;
@@ -391,7 +463,7 @@ class map_iter {
 public:
 	map_iter() = default;
 
-	explicit map_iter(map<K, V, Hash> &m):
+	explicit map_iter(T &m):
 		_buckets(m._buckets), _bucket(m._buckets),
 		_buckets_n(1 << m._B), _bucket_i(0), _i(0)
 	{
@@ -413,24 +485,34 @@ public:
 	bool operator!=(const map_iter&) const { return _bucket_i != _buckets_n; }
 	key_and_value<const K&, V&> operator*() {
 		return {
-			map<K, V, Hash>::template _indirect<
-				map<K, V, Hash>::_indirect_key(), K
+			T::template _indirect<
+				T::_indirect_key(), K
 			>::get(_bucket->keys[_i]),
-			map<K, V, Hash>::template _indirect<
-				map<K, V, Hash>::_indirect_value(), V
+			T::template _indirect<
+				T::_indirect_value(), V
 			>::get(_bucket->values[_i]),
 		};
 	}
 };
 
 template <typename K, typename V, typename Hash>
-map_iter<K, V, Hash> begin(map<K, V, Hash> &m) {
-	return map_iter<K, V, Hash>(m);
+map_iter<map<K, V, Hash>> begin(map<K, V, Hash> &m) {
+	return map_iter<map<K, V, Hash>>(m);
 }
 
 template <typename K, typename V, typename Hash>
-map_iter<K, V, Hash> end(map<K, V, Hash>&) {
-	return map_iter<K, V, Hash>();
+map_iter<map<K, V, Hash>> end(map<K, V, Hash>&) {
+	return map_iter<map<K, V, Hash>>();
+}
+
+template <typename K, typename V, typename Hash>
+map_iter<const map<K, V, Hash>> begin(const map<K, V, Hash> &m) {
+	return map_iter<const map<K, V, Hash>>(m);
+}
+
+template <typename K, typename V, typename Hash>
+map_iter<const map<K, V, Hash>> end(const map<K, V, Hash>&) {
+	return map_iter<const map<K, V, Hash>>();
 }
 
 } // namespace zbs

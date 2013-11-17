@@ -118,7 +118,7 @@ STF_TEST("move semantics") {
 	map<move_only_str, string> a;
 	a["hello"] = "world";
 	a["world"] = "hello";
-	auto w = a.lookup("hello");
+	auto w = a.lookup(move_only_str("hello"));
 	STF_ASSERT(w != nullptr && *w == "world");
 }
 
@@ -134,6 +134,72 @@ STF_TEST("map::lookup(const K&, V)") {
 	STF_ASSERT(y == 2);
 	auto z = m.lookup("d", -1);
 	STF_ASSERT(z == -1);
+}
+
+STF_TEST("map_iter<const map>") {
+	map<string, string> a = {
+		{"John Smith", "521-1234"},
+		{"Lisa Smith", "521-8976"},
+		{"Sandra Dee", "521-9655"},
+		{"Ted Baker", "418-4165"},
+		{"Sam Doe", "521-5030"},
+	};
+	const map<string, string> &b = a;
+	for (const auto &it : b) {
+		STF_PRINTF("%s: %s", it.key.c_str(), it.value.c_str());
+		if (it.key == "Sandra Dee")
+			it.value = "ok to modify value, not map";
+	}
+	const string *v = b.lookup("Sandra Dee");
+	STF_ASSERT(v && *v == "ok to modify value, not map");
+}
+
+STF_TEST("map::remove(const K&)") {
+	map<string, string> a = {
+		{"John Smith", "521-1234"},
+		{"Lisa Smith", "521-8976"},
+		{"Sandra Dee", "521-9655"},
+		{"Ted Baker", "418-4165"},
+		{"Sam Doe", "521-5030"},
+	};
+	a.remove("Not found");
+	STF_ASSERT(a.len() == 5);
+	a.remove("John Smith");
+	STF_ASSERT(a.len() == 4);
+	STF_ASSERT(a.lookup("John Smith") == nullptr);
+	a.remove("John Smith");
+	STF_ASSERT(a.len() == 4);
+	STF_ASSERT(a.lookup("John Smith") == nullptr);
+	a["John Smith"] = "521-1234";
+	STF_ASSERT(a.len() == 5);
+	STF_ASSERT(a["John Smith"] == "521-1234");
+	a.remove("John Smith");
+	a.remove("Lisa Smith");
+	a.remove("Sandra Dee");
+	a.remove("Ted Baker");
+	STF_ASSERT(a.len() == 1);
+}
+
+STF_TEST("map(map&&)") {
+	map<string, string> a = {
+		{"John Smith", "521-1234"},
+		{"Lisa Smith", "521-8976"},
+		{"Sandra Dee", "521-9655"},
+		{"Ted Baker", "418-4165"},
+		{"Sam Doe", "521-5030"},
+	};
+	map<string, string> b = std::move(a);
+	STF_ASSERT(a.len() == 0);
+	STF_ASSERT(a.lookup("Ted Baker") == nullptr);
+	STF_ASSERT(b.len() == 5);
+	STF_ASSERT(b.lookup("Ted Baker") != nullptr);
+	b.remove("Ted Baker");
+	a = std::move(b);
+	STF_ASSERT(b.len() == 0);
+	STF_ASSERT(a.lookup("Ted Baker") == nullptr);
+	STF_ASSERT(b.lookup("Ted Baker") == nullptr);
+	STF_ASSERT(a["Sam Doe"] == "521-5030");
+	STF_ASSERT(b["Sam Doe"] == "");
 }
 
 STF_TEST("oop ctor/dtor balance correctness") {
