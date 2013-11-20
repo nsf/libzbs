@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
 #include "_config.h"
 #include "_types.hh"
@@ -55,3 +56,13 @@ template <typename T> T *malloc(int n) { return (T*)xmalloc(sizeof(T) * n); }
 template <typename T> void free(T *ptr) { xfree(ptr); }
 
 }} // namespace zbs::detail
+
+namespace zbs {
+
+struct or_die_t {};
+extern const or_die_t or_die;
+
+} // namespace zbs
+
+void *operator new(size_t size, const zbs::or_die_t&) noexcept;
+void *operator new[](size_t size, const zbs::or_die_t&) noexcept;
