@@ -18,6 +18,12 @@ static void _MCC(_test_func_, __LINE__)(stf::test&);						\
 static stf::test _MCC(_test_, __LINE__)(_stf_runner, name, _MCC(_test_func_, __LINE__));	\
 static void _MCC(_test_func_, __LINE__)(stf::test &__T)
 
+#define STF_FUNC(name, ...)									\
+static void name(stf::test &__T, __VA_ARGS__)
+
+#define STF_CALL(name, ...)									\
+name(__T, __VA_ARGS__)
+
 #define STF_SUITE_NAME(name)									\
 static stf::name_setter _MCC(_name_setter_, __LINE__)(_stf_runner, name);
 

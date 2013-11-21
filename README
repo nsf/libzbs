@@ -1,1 +1,27 @@
-Experimental C++11 cross-platform software utility library. In design and development.
+Experimental C++11 cross-platform software utility library. In design and
+development.
+
+Some of the characteristics of the library:
+
+ - It uses a subset of C++11.
+
+   The subset is everything, excluding exceptions and rtti. No comments on
+   that decision.
+
+ - Prefer to please 90%.
+
+   Fulfilling the needs for majority instead of trying to fulfill everybody's
+   needs. For example libzbs doesn't provide custom allocators for containers,
+   because most people don't need them.
+
+ - Prefer runtime over compile-time.
+
+   Yes, C++11 has powerful compile-time mechanisms, but it doesn't mean that
+   you have to use them for everything. As an example, libzbs may use a
+   function pointer (or a similar abstraction) in a place where otherwise
+   template functor argument could be used. Yes, it hurts performance, but at
+   the same time it produces less code bloat and makes compilation faster.
+
+ - Prefer user-friendly over high performance.
+
+   If it's possible to do both - great, but the preference should be clear.
