@@ -8,7 +8,6 @@
 #include "_slice.hh"
 
 namespace zbs {
-
 namespace detail {
 
 template <typename T>
@@ -19,11 +18,15 @@ struct char_traits {
 	}
 };
 
-} // namespace detail
+}} // namespace zbs::detail
+
+namespace zbs {
 
 //============================================================================
 // basic string template
 //============================================================================
+
+/// \cond ignore
 
 template <typename T>
 class basic_string {
@@ -383,6 +386,8 @@ public:
 	operator slice<char>() { return sub(); }
 	operator slice<const char>() const { return sub(); }
 };
+
+/// \endcond
 
 // string vs. const char*
 string operator+(const string &lhs, const char *rhs);

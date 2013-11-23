@@ -22,7 +22,7 @@ namespace zbs {
 /// you need to return all extra memory to the system, just call the shrink()
 /// method.
 ///
-/// @headerfile zbs/vector.hh
+/// @headerfile zbs.hh
 ///
 /// TODO(nsf): better description here
 template <typename T>
@@ -168,7 +168,8 @@ public:
 		}
 	}
 
-	/// Destruct all the elements of the vector and deallocate used storage.
+	/// Destructs all the elements of the vector and deallocate used
+	/// storage.
 	~vector() {
 		for (int i = 0; i < _len; i++) {
 			_data[i].~T();
@@ -280,6 +281,8 @@ public:
 	/// moment.
 	inline int len() const { return _len; }
 
+	/// Returns an amount of memory occupied by the vector elements in
+	/// bytes. Equivalent to `sizeof(T) * len()`.
 	inline int byte_len() const { return _len * sizeof(T); }
 
 	/// Returns an amount of elements the vector may hold without
@@ -327,7 +330,8 @@ public:
 
 	/// Releases unused memory to the system.
 	///
-	/// If the cap() != len(), it will reallocate the vector so that cap() == len().
+	/// If the cap() != len(), it will reallocate the vector so that
+	/// cap() == len().
 	void shrink() {
 		if (_cap == _len) {
 			return;
@@ -485,6 +489,8 @@ public:
 
 	/// Appends a copy of the elements from the slice `s` to the end of the
 	/// vector.
+	///
+	/// It is safe to append a slice of the vector itself.
 	inline void append(slice<const T> s) {
 		insert(_len, s);
 	}

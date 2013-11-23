@@ -18,8 +18,7 @@ private:									\
 										\
 public:										\
 	constexpr slice(): _data(nullptr), _len(0) {}				\
-	constexpr slice(std::initializer_list<T> r):				\
-		_data(r.begin()), _len(r.size()) {}				\
+	slice(std::initializer_list<T> r): _data(r.begin()), _len(r.size()) {}	\
 	template <int N>							\
 	constexpr slice(const T (&array)[N]): _data(array), _len(N) {}		\
 	constexpr slice(const T *data, int len): _data(data), _len(len) {}	\

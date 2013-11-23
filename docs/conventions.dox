@@ -6,17 +6,18 @@ Various conventions that are a must to follow if you contribute to libzbs code.
 Naming follows STL
 ------------------
 
+\note Keep in mind that these rules apply to publically visible things only. If a
+function is static it doesn't matter if it's in detail namespace or not. If a
+header file is private (doesn't require end-user distribution), it doesn't
+matter how it's named.
+
 - Library uses `zbs` namespace and a bunch of nested namespaces.
 - Everything uses lower-case letters with underscores.
 - Macros use upper-case letters with underscores, `ZBS_` prefix is mandatory.
 - Private class members are always prefixed with `_`.
 - Private macros are prefixed with `_ZBS_`.
 - Private functions use `zbs::detail` namespace without any prefixes.
-- Private, but public header files are prefixed with `_`.
-
-*By private-public header files I mean those that have to be distributed as
-public ones due to the fact that templates implementation code resides in
-header files.*
+- Private header files are prefixed with `_`.
 
 Formatting is defined by a couple of simple rules
 -------------------------------------------------
@@ -28,6 +29,8 @@ Formatting is defined by a couple of simple rules
 
 Pointers vs. references as function parameters
 ----------------------------------------------
+
+\note Rules apply only to publically visible API.
 
 Use pointers when:
  - The function has a side effect of saving the subject parameter after the

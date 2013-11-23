@@ -1,0 +1,185 @@
+namespace zbs {
+
+/// Container for a null-terminated sequence of bytes. Many methods and
+/// functions assume its contents are UTF-8 encoded. There are no invalid
+/// strings, all strings are valid in a sense that they are a sequence of zero
+/// or more bytes ending with a null byte.
+///
+/// @headerfile zbs.hh
+class string {
+public:
+	/// Default constructor. Constructs an empty string.
+	string();
+
+	/// Copy constructor. Constructs a string with a copy of the contents
+	/// of `r`.
+	string(const string &r);
+
+	/// Move constructor. Uses the contents of the string `r` to construct
+	/// a string. String `r` becomes empty.
+	string(string &&r);
+
+	/// Releases the memory occupied by string contents back to operating
+	/// system.
+	~string() = default;
+
+	/// Replaces the contents of the string with a copy of the contents of
+	/// the string `r`.
+	string &operator=(const string &r);
+
+	/// Replaces the contents of the string with the contents of the string
+	/// `r`. String `r` becomes empty.
+	string &operator=(string &&r);
+
+public:
+
+	/// Uses a copy of the contents of the slice `r` to construct a string.
+	string(slice<const char> r);
+
+	/// Uses a copy of the contents of the null-terminated C string `cstr`
+	/// to construct a string.
+	string(const char *cstr);
+
+	/// Replaces the contents of the string with a copy of the contents of
+	/// the slice `r`.
+	string &operator=(slice<const char> r);
+
+	/// Replaces the contents of the string with a copy of the contents of
+	/// the null-terminated C string `cstr`.
+	string &operator=(const char *cstr);
+
+	/// Typical element access operator. Provides byte-wise access, not
+	/// character-wise.
+	char &operator[](int idx);
+
+	/// Typical element access operator. Provides byte-wise access, not
+	/// character-wise.
+	const char &operator[](int idx) const;
+
+	/// String to slice implicit conversion operator.
+	operator slice<char>();
+
+	/// String to slice implicit conversion operator.
+	operator slice<const char>() const;
+
+	/// Detaches the data (if any) from the string. The caller is
+	/// responsible for freeing it with detail::free() afterwards. It is
+	/// useful in certain cases, like for example moving memory from string
+	/// to vector. Sure it's possible to add move constructors and move
+	/// assignment operators for these cases, but it introduces
+	/// dependencies between otherwise independent types.
+	/// @unsafe
+	char *detach_unsafe();
+
+	/// Uses provided arguments as internal data, releasing all the
+	/// previous contents of the string. The data should be previously
+	/// allocated with detail::malloc().
+	/// @unsafe
+	void attach_unsafe(char *data, int len, int cap);
+
+	/// Returns a length of the string in bytes.
+	int len() const;
+
+	/// Same as `len()` for this type of string. Exists for consistency.
+	int byte_len() const;
+
+	/// Returns an amount of bytes the string may hold without performing
+	/// reallocations.
+	int cap() const;
+
+	/// Returns a pointer to the first byte in the string.
+	char *data();
+
+	/// Returns a pointer to the first byte in the string.
+	const char *data() const;
+
+	/// Returns a pointer to the first byte in the string. This function
+	/// duplicates functionality of `data()`, but provided for convenience.
+	const char *c_str() const;
+
+	/// Clears the string by setting its length to zero. Doesn't reallocate
+	/// or release memory.
+	void clear();
+
+	/// Makes sure there is enough place to hold `n` bytes.
+	///
+	/// The function will reallocate the string if the current cap() is
+	/// less that what was requested. Negative requests are ignored.
+	///
+	/// Reallocation is not a cheap operation and if you want to fill a
+	/// string with a known (even if approximately) amount of bytes, use
+	/// this method for that purpose.
+	void reserve(int n);
+
+	/// Releases unused memory to operating system.
+	///
+	/// If the cap() != len(), it will reallocate the string so that
+	/// cap() == len().
+	void shrink();
+
+	/// Resizes the string to contain `n` bytes.
+	///
+	/// If `n` is greater than len(), additional bytes are appended and
+	/// zeroed.
+	///
+	/// If `n` is less than len(), the string is reduced to first `n` bytes.
+	void resize(int n);
+
+	/// Resizes the string to contain `n` bytes.
+	///
+	/// If `n` is greater than len(), additional bytes are appended and
+	/// initialized to the value of `c`.
+	///
+	/// If `n` is less than len(), the string is reduced to first `n` bytes.
+	void resize(int n, char c);
+
+	/// Inserts the `c` at the specified position `idx`.
+	void insert(int idx, char c);
+
+	/// Appends the `c` to the end of the string.
+	void append(char c);
+
+	/// Removes a byte at the specified position `idx`.
+	void remove(int idx);
+
+	/// Inserts a copy of the bytes from the slice `s` at the specified
+	/// position `idx`.
+	///
+	/// It is safe to use a slice of the string itself to perform the
+	/// insertion.
+	void insert(int idx, slice<const char> s);
+
+	/// Appends a copy of the bytes from the slice `s` to the end of the
+	/// string.
+	///
+	/// It is safe to append a slice of the string itself.
+	void append(slice<const char> s);
+
+	/// Removes the slice [`begin`, `end`) of bytes from the string.
+	///
+	/// All bytes between `begin` (inclusive) and `end` (exclusive) are
+	/// removed. It's easier to remember the meaning of parameters if you
+	/// realize that the amount of removed bytes equals to (`end` -
+	/// `begin`).
+	void remove(int begin, int end);
+
+	/// Returns the slice [0, len()) of the string.
+	slice<char> sub();
+
+	/// Returns the slice [`begin`, len()) of the string.
+	slice<char> sub(int begin);
+
+	/// Returns the slice [`begin`, `end`) of the string.
+	slice<char> sub(int begin, int end);
+
+	/// Returns the slice [0, len()) of the string.
+	slice<const char> sub() const;
+
+	/// Returns the slice [`begin`, len()) of the string.
+	slice<const char> sub(int begin) const;
+
+	/// Returns the slice [`begin`, `end`) of the string.
+	slice<const char> sub(int begin, int end) const;
+};
+
+}
