@@ -7,7 +7,6 @@
 
 namespace zbs {
 
-
 // slice template helper macro, however we unwrap it manually in the `const T`
 // slice specialization for documentation purposes, keep that in mind if you're
 // editing it
@@ -48,6 +47,22 @@ public:										\
 	}									\
 private:
 
+/// Reference to a contiguous segment of an array.
+///
+/// Slice is one of the fundamental concepts in the libzbs. You can think of it
+/// as a safe pointer to a segment of an array. Not only it contains a pointer
+/// to the first element, it also keeps the length of that segment. Using
+/// slices everywhere is a very convenient way to avoid various kinds of buffer
+/// overflow bugs.
+///
+/// Slice explicitly doesn't have any kind of memory ownership semantics, it's
+/// up to you to keep an eye on who's the owner of the memory and when it goes
+/// away. In that regard it's as safe as an ordinary pointer. On the other hand
+/// using slice we can unify access to all sorts of seqential structures, be it
+/// a temporary C array on the stack, or a zbs::vector, or a zbs::string, or
+/// even an initalizer list.
+///
+/// @headerfile zbs.hh
 template <typename T>
 class slice {
 	T *_data;
@@ -55,45 +70,90 @@ class slice {
 
 public:
 
+	/// Default constructor. Constructs an empty slice.
+	///
+	/// Technically a null slice and an empty slice are semantically
+	/// equivalent, because you can't do anything useful with slice's data
+	/// if its length is zero.
 	constexpr slice(): _data(nullptr), _len(0) {}
+
+	/// Construct a slice using a C array.
 	template <int N>
 	constexpr slice(T (&array)[N]): _data(array), _len(N) {}
+
+	/// Constructs a slice using raw data pointer and a length.
+	/// @unsafe
 	constexpr slice(T *data, int len): _data(data), _len(len) {}
+
+	/// Copy constructor. Constructs a slice using the data pointer and the
+	/// length from the slice `r`.
 	constexpr slice(const slice &r) = default;
+
+	/// Replaces the contents of the slice with the data pointer and the
+	/// length from the slice `r`. TOOD: ugly description.
 	slice &operator=(const slice &r) = default;
+
+	/// Checks if the slice is empty or not.
 	constexpr explicit operator bool() const { return _len != 0; }
+
+	/// Typical element access operator.
 	T &operator[](int idx) {
 		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
+
+	/// Typical element access operator.
 	const T &operator[](int idx) const {
 		_ZBS_IDX_BOUNDS_CHECK(idx, _len);
 		return _data[idx];
 	}
+
+	/// Returns the length of the slice.
 	constexpr int len() const { return _len; }
+
+	/// Returns an amount of memory occupied by the slice elements in
+	/// bytes. Equivalent to `sizeof(T) * len()`.
 	constexpr int byte_len() const { return _len * sizeof(T); }
+
+	/// Returns a pointer to the first element of the slice.
 	T *data() { return _data; }
+
+	/// Returns a pointer to the first element of the slice.
 	constexpr const T *data() const { return _data; }
+
+	/// Returns the subslice [0, len()) of the slice. The function is
+	/// useless, but provided for consistency.
 	slice sub() {
 		return {_data, _len};
 	}
+
+	/// Returns the subslice [`begin`, len()) of the slice.
 	slice sub(int begin) {
 		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
+
+	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice sub(int begin, int end) {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		_ZBS_SLICE_BOUNDS_CHECK(end, _len);
 		return {_data + begin, end - begin};
 	}
+
+	/// Returns the subslice [0, len()) of the slice. The function is
+	/// useless, but provided for consistency.
 	slice<const T> sub() const {
 		return {_data, _len};
 	}
+
+	/// Returns the subslice [`begin`, len()) of the slice.
 	slice<const T> sub(int begin) const {
 		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
 		return {_data + begin, _len - begin};
 	}
+
+	/// Returns the subslice [`begin`, `end`) of the slice.
 	slice<const T> sub(int begin, int end) const {
 		_ZBS_ASSERT(begin <= end);
 		_ZBS_SLICE_BOUNDS_CHECK(begin, _len);
@@ -102,10 +162,12 @@ public:
 	}
 };
 
+/// \cond ignore
 template <typename T>
 class slice<const T> {
 	_common_slice_part_const(T)
 };
+/// \endcond
 
 //============================================================================
 // slice template specializations

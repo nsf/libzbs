@@ -26,8 +26,6 @@ namespace zbs {
 // basic string template
 //============================================================================
 
-/// \cond ignore
-
 template <typename T>
 class basic_string {
 protected:
@@ -351,20 +349,11 @@ extern template class basic_string<char32_t>;
 // utf-8 string
 //============================================================================
 
-/// Container for a null-terminated sequence of bytes. Many methods and
-/// functions assume its contents are UTF-8 encoded. There are no invalid
-/// strings, all strings are valid in a sense that they are a sequence of zero
-/// or more bytes ending with a null byte.
+/// \cond ignore
 class string : public basic_string<char> {
 public:
-	/// Default constructor. Constructs an empty string.
 	string() = default;
-
-	/// Copy constructor. Constructs a copy of another string.
 	string(const string&) = default;
-
-	/// Move constructor. Uses the contents of another string to construct
-	/// a string.
 	string(string&&) = default;
 	~string() = default;
 	string &operator=(const string&) = default;
@@ -386,7 +375,6 @@ public:
 	operator slice<char>() { return sub(); }
 	operator slice<const char>() const { return sub(); }
 };
-
 /// \endcond
 
 // string vs. const char*

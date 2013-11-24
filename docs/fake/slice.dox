@@ -1,0 +1,91 @@
+namespace zbs {
+
+/// Slice template specialization for `const T`.
+/// @sa slice
+///
+/// @headerfile zbs.hh
+template <typename T>
+class slice<const T> {
+public:
+	/// Default constructor. Constructs an empty slice.
+	///
+	/// Technically a null slice and an empty slice are semantically
+	/// equivalent, because you can't do anything useful with slice's data
+	/// if its length is zero.
+	constexpr slice();
+
+	/// Constructs a slice using std::initializer_list.
+	///
+	/// This function is only available for `const T` specialization of the
+	/// slice for obvious reasons: std::initializer_list represents a const
+	/// C array.
+	///
+	/// @warning However, never use this constructor to create a slice
+	/// object on the stack like that:
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cc}
+	/// zbs::slice<const int> = { 1, 2, 3, 4, 5 };
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	/// It's supposed to be used only as a syntax sugar for creating
+	/// temporary slices, e.g.:
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cc}
+	/// if (zbs::bytes::starts_with(slice, {'\xFF', '\xFE'})) {}
+	/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	/// Perhaps it's not dangerious to do so with POD types, but when it
+	/// comes to non-POD types, the std::initializer_list will be destroyed
+	/// (destroying its elements as well) immediately after construction of
+	/// a slice object is finished. And as a result the newly created slice
+	/// contains a pointer to destroyed invalid data.
+	///
+	/// @warning We have this constructor solely for the purpose of
+	/// allowing the usage of std::initializer_list in all the functions
+	/// which take slice<const T> as an argument.
+	slice(std::initializer_list<T> r);
+
+	/// Construct a slice using a C array.
+	template <int N>
+	constexpr slice(const T (&array)[N]);
+
+	/// Constructs a slice using raw data pointer and a length.
+	/// @unsafe
+	constexpr slice(const T *data, int len);
+
+	/// Copy constructor. Constructs a slice using the data pointer and the
+	/// length from the non-const slice `r`.
+	constexpr slice(const slice<T> &r);
+
+	/// Copy constructor. Constructs a slice using the data pointer and the
+	/// length from the slice `r`.
+	constexpr slice(const slice &r);
+
+	/// Replaces the contents of the slice with the data pointer and the
+	/// length from the slice `r`. TOOD: ugly description.
+	slice &operator=(const slice &r);
+
+	/// Checks if the slice is empty or not.
+	constexpr explicit operator bool() const;
+
+	/// Returns the length of the slice.
+	constexpr int len() const;
+
+	/// Returns an amount of memory occupied by the slice elements in
+	/// bytes. Equivalent to `sizeof(T) * len()`.
+	constexpr int byte_len() const;
+
+	/// Returns a pointer to the first element of the slice.
+	constexpr const T *data() const;
+
+	/// Returns the subslice [0, len()) of the slice. The function is
+	/// useless, but provided for consistency.
+	slice<const T> sub() const;
+
+	/// Returns the subslice [`begin`, len()) of the slice.
+	slice<const T> sub(int begin) const;
+
+	/// Returns the subslice [`begin`, `end`) of the slice.
+	slice<const T> sub(int begin, int end) const;
+
+	/// Typical element access operator.
+	const T &operator[](int idx) const;
+};
+
+} // namespace zbs
