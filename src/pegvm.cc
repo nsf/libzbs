@@ -192,6 +192,10 @@ static void codegen(vector<byte> &instbuf,
 		ins->set_to(tree->to);
 		break;
 	}
+	case ast_type::any: {
+		inst_new<inst_any>(instbuf);
+		break;
+	}
 	case ast_type::repetition: {
 		if (tree->len < 0) {
 			// patt? - zero or one
@@ -254,6 +258,12 @@ static void dump(slice<const byte> code) {
 		auto type = reinterpret_cast<const inst_common*>(ip)->type;
 		int ioff = ip-code.data();
 		switch (type) {
+		case inst_type::any: {
+			auto ia = reinterpret_cast<const inst_any*>(ip);
+			printf("%4d: inst_any\n", ioff);
+			ip += inst_len(ia);
+			break;
+		}
 		case inst_type::string: {
 			auto is = reinterpret_cast<const inst_string*>(ip);
 			printf("%4d: inst_string (%d, \"%.*s\")\n",
@@ -342,6 +352,14 @@ bool bytecode::match(slice<const char> input) const {
 	for (;;) {
 		auto type = reinterpret_cast<const inst_common*>(ip)->type;
 		switch (type) {
+		case inst_type::any: {
+			auto ia = reinterpret_cast<const inst_any*>(ip);
+			if (input.len() == 0)
+				goto fail;
+			ip += inst_len(ia);
+			input = input.sub(utf8::decode_rune(input).size);
+			break;
+		}
 		case inst_type::string: {
 			auto is = reinterpret_cast<const inst_string*>(ip);
 			if (is->len > input.len())

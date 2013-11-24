@@ -80,16 +80,14 @@ struct ast {
 
 	ast() = delete;
 	ast(const char *str);
-	ast(int n);
 	ast(char c);
 	explicit ast(ast_node *p): p(p) {}
 };
 
+ast any();
+
 // P - pattern, matches string as is
 ast P(const char *str);
-
-// P(n) - matches any character n times, if n < 0, it's the same as n == 0
-ast P(int n);
 
 // P(c) - matches byte as is
 ast P(char c);

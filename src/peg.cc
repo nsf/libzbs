@@ -60,9 +60,6 @@ ast_node *ast_node::clone() const {
 ast::ast(const char *str): p(P(str).p) {
 }
 
-ast::ast(int n): p(P(n).p) {
-}
-
 ast::ast(char c): p(P(c).p) {
 }
 
@@ -79,17 +76,13 @@ static ast _string_node(ast_type type, const char *str) {
 	return ast{n};
 }
 
+ast any() {
+	return ast{_new_node(ast_type::any)};
+}
+
 // =========== pattern ===========
 ast P(const char *str) {
 	return _string_node(ast_type::literal, str);
-}
-
-ast P(int len) {
-	if (len < 0)
-		len = 0;
-	ast_node *n = _new_node(ast_type::any);
-	n->len = len;
-	return ast{n};
 }
 
 ast P(char c) {

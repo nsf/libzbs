@@ -92,3 +92,12 @@ STF_TEST("not") {
 	STF_ASSERT(!p.match("456;"));
 	STF_ASSERT(p.match("1209;"));
 }
+
+STF_TEST("any") {
+	using namespace zbs::peg;
+	bytecode p = compile(+(any() - (R("09") | P(";"))) >> ";");
+	STF_ASSERT(p.match("whateverвсёок;"));
+	STF_ASSERT(!p.match("whatever7всёок;"));
+	STF_ASSERT(p.match("И ДАЖЕ ТАК/#$%&*@!)(;"));
+	STF_ASSERT(!p.match("И0ДАЖЕ9ТАК/#$%&*@!)(;"));
+}
