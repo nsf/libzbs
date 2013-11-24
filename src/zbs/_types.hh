@@ -17,7 +17,7 @@ typedef int16_t  int16;  ///< Integer type with width of 16 bits.
 typedef int32_t  int32;  ///< Integer type with width of 32 bits.
 typedef int64_t  int64;  ///< Integer type with width of 64 bits.
 typedef uint8    byte;   ///< Convenience alias for uint8.
-typedef char32_t rune;   ///< Unicode code point.
+typedef int32    rune;   ///< Unicode code point.
 
 /// @}
 
