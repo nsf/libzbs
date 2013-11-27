@@ -25,10 +25,19 @@ class func<R (Args...)> {
 		return (*obj)(std::forward<Args>(args)...);
 	}
 
-	R (*_invoker)(void*, Args&&...);
-	void *_data;
+	R (*_invoker)(void*, Args&&...) {nullptr};
+	void *_data {nullptr};
 
 public:
+	func() = default;
+	func(const func &r) = default;
+	func(func &&r) = default;
+
+	// We need this little guy here, because otherwise template ctor
+	// func(T &obj) will be considered as a better overload match
+	// in some cases
+	func(func &r) = default;
+
 	template <typename T>
 	func(T &obj): _invoker(_invoke_obj<T>),
 		_data(static_cast<void*>(&obj)) {}
@@ -37,13 +46,14 @@ public:
 		_data(static_cast<void*>(const_cast<T*>(&obj))) {}
 	func(R (*fp)(Args...)): _invoker(_invoke_func),
 		_data(reinterpret_cast<void*>(fp)) {}
-	func(const func&) = default;
-	func(func&&) = default;
+
 	func &operator=(const func&) = default;
 	func &operator=(func&&) = default;
 	R operator()(Args ...args) const {
 		return (*_invoker)(_data, std::forward<Args>(args)...);
 	}
+
+	explicit operator bool() const { return _data != nullptr; }
 };
 
 } // namespace zbs

@@ -1,5 +1,6 @@
 #include "zbs/peg.hh"
 #include "zbs/unicode/utf8.hh"
+#include "zbs/_string.hh"
 
 namespace utf8 = zbs::unicode::utf8;
 
@@ -18,7 +19,24 @@ enum class inst_type : byte {
 	rewind_commit,
 	fail,
 	fail_twice,
+	open_capture,
+	close_capture,
 };
+//----------------------------------------------------------------------------
+// capture_type to string
+//----------------------------------------------------------------------------
+
+const char *to_string(capture_type t) {
+	switch (t) {
+	case capture_type::group:
+		return "capture_type::group";
+	case capture_type::simple:
+		return "capture_type::simple";
+	case capture_type::close:
+		return "capture_type::close";
+	}
+	return "capture_type::?";
+}
 
 //----------------------------------------------------------------------------
 // Instruction specific data structures
@@ -51,8 +69,11 @@ struct inst_string : inst_base<inst_type::string> {
 struct inst_set : inst_base<inst_type::set> {
 	inst_type type;
 	uint16 len;      // length of the 'uni' attachment
-	uint32 ascii[4]; // bitmap for the 7-bit ascii subset of utf-8
+	uint8 ascii[16]; // bitmap for the 7-bit ascii subset of utf-8
 	rune uni[1];     // the rest is attached here in a decoded form, sorted
+
+	void set_ascii(rune r) { ascii[r / 8] |= 1 << (r & 7); }
+	bool test_ascii(rune r) const { return ascii[r / 8] & (1 << (r & 7)); }
 };
 
 // match range or fail
@@ -92,6 +113,13 @@ struct inst_rewind_commit : inst_base<inst_type::rewind_commit> {
 
 struct inst_fail : inst_base<inst_type::fail> {};
 struct inst_fail_twice : inst_base<inst_type::fail_twice> {};
+
+struct inst_open_capture : inst_base<inst_type::open_capture> {
+	inst_type type;
+	capture_type ctype;
+};
+
+struct inst_close_capture : inst_base<inst_type::close_capture> {};
 
 //----------------------------------------------------------------------------
 // Instruction length calculation helpers
@@ -184,6 +212,26 @@ static void codegen(vector<byte> &instbuf,
 		break;
 	}
 	case ast_type::set: {
+		int uni_n = 0;
+		// count unicode runes
+		for (const auto &it : string_iter(tree->buffer())) {
+			if (it.rune >= utf8::rune_self) {
+				uni_n++;
+			}
+		}
+		auto ins = inst_new<inst_set>(instbuf, uni_n);
+		for (int i = 0; i < 16; i++)
+			ins->ascii[i] = 0;
+		ins->len = uni_n;
+
+		int i = 0;
+		for (const auto &it : string_iter(tree->buffer())) {
+			if (it.rune < utf8::rune_self) {
+				ins->set_ascii(it.rune);
+			} else {
+				ins->uni[i++] = it.rune;
+			}
+		}
 		break;
 	}
 	case ast_type::range: {
@@ -246,6 +294,13 @@ static void codegen(vector<byte> &instbuf,
 		rcommit->offset = instbuf.len();
 		break;
 	}
+	case ast_type::capture: {
+		auto open = inst_new<inst_open_capture>(instbuf);
+		open->ctype = static_cast<capture_type>(tree->len);
+		codegen(instbuf, tree->left.get(), err);
+		inst_new<inst_close_capture>(instbuf);
+		break;
+	}
 	default:
 		printf("oops\n");
 		break;
@@ -268,6 +323,13 @@ static void dump(slice<const byte> code) {
 			auto is = reinterpret_cast<const inst_string*>(ip);
 			printf("%4d: inst_string (%d, \"%.*s\")\n",
 				ioff, is->len, is->len, is->str);
+			ip += inst_len(is);
+			break;
+		}
+		case inst_type::set: {
+			auto is = reinterpret_cast<const inst_set*>(ip);
+			printf("%4d: inst_set (%d unicode code points)\n",
+				ioff, is->len);
 			ip += inst_len(is);
 			break;
 		}
@@ -318,6 +380,19 @@ static void dump(slice<const byte> code) {
 			ip += inst_len(instf);
 			break;
 		}
+		case inst_type::open_capture: {
+			auto ioc = reinterpret_cast<const inst_open_capture*>(ip);
+			printf("%4d: inst_open_capture (%s)\n", ioff,
+				to_string(ioc->ctype));
+			ip += inst_len(ioc);
+			break;
+		}
+		case inst_type::close_capture: {
+			auto icc = reinterpret_cast<const inst_close_capture*>(ip);
+			printf("%4d: inst_close_capture\n", ioff);
+			ip += inst_len(icc);
+			break;
+		}
 		case inst_type::end: {
 			printf("%4d: inst_end\n", ioff);
 			return;
@@ -337,15 +412,8 @@ bytecode compile(const ast &tree, error *err) {
 	return bytecode{std::move(instbuf)};
 }
 
-struct stack_t {
-	slice<const char> input;
-	int offset;
-};
-
-bool bytecode::match(slice<const char> input) const {
-	printf("--- %.*s\n", input.len(), input.data());
-	dump(code);
-	vector<stack_t> stack;
+bool bytecode::match(slice<const char> input) {
+	stack.clear();
 	stack.reserve(8);
 
 	const byte *ip = code.data();
@@ -377,6 +445,30 @@ bool bytecode::match(slice<const char> input) const {
 
 			ip += inst_len(is);
 			input = input.sub(is->len);
+			break;
+		}
+		case inst_type::set: {
+			auto is = reinterpret_cast<const inst_set*>(ip);
+			if (input.len() == 0)
+				goto fail;
+
+			sized_rune r = utf8::decode_rune(input);
+			if (r.rune < utf8::rune_self) {
+				if (!is->test_ascii(r.rune))
+					goto fail;
+			} else {
+				bool found = false;
+				for (int i = 0; i < is->len; i++) {
+					if (is->uni[i] == r.rune) {
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					goto fail;
+			}
+			ip += inst_len(is);
+			input = input.sub(r.size);
 			break;
 		}
 		case inst_type::range: {
@@ -422,6 +514,20 @@ bool bytecode::match(slice<const char> input) const {
 			ip = code.data() + irc->offset;
 			break;
 		}
+		case inst_type::open_capture: {
+			auto ioc = reinterpret_cast<const inst_open_capture*>(ip);
+			int offset = input.data() - initial_input.data();
+			captures.append({ioc->ctype, offset});
+			ip += inst_len(ioc);
+			break;
+		}
+		case inst_type::close_capture: {
+			auto icc = reinterpret_cast<const inst_close_capture*>(ip);
+			int offset = input.data() - initial_input.data();
+			captures.append({capture_type::close, offset});
+			ip += inst_len(icc);
+			break;
+		}
 		case inst_type::fail_twice:
 			_ZBS_ASSERT(stack.len() > 0);
 			stack.resize(stack.len()-1);
@@ -440,6 +546,31 @@ bool bytecode::match(slice<const char> input) const {
 			return true;
 		default:
 			goto fail;
+		}
+	}
+}
+
+void bytecode::apply_captures(capturer *cap) const {
+	int pending = -1;
+	for (const auto &c : captures) {
+		switch (c.type) {
+		case capture_type::group:
+			cap->open_group();
+			break;
+		case capture_type::simple:
+			pending = c.offset;
+			break;
+		case capture_type::close:
+			if (pending != -1) {
+				cap->capture({
+					initial_input.data() + pending,
+					c.offset - pending
+				});
+				pending = -1;
+			} else {
+				cap->close_group();
+			}
+			break;
 		}
 	}
 }

@@ -108,6 +108,35 @@ ast R(const char *range) {
 	return ast{n};
 }
 
+// =========== captures ===========
+ast C(const ast &arg) {
+	ast_node *n = _new_node(ast_type::capture);
+	n->len = static_cast<int>(capture_type::simple);
+	n->left.reset(arg.p->clone());
+	return ast{n};
+}
+
+ast C(ast &&arg) {
+	ast_node *n = _new_node(ast_type::capture);
+	n->len = static_cast<int>(capture_type::simple);
+	n->left = std::move(arg.p);
+	return ast{n};
+}
+
+ast Cg(const ast &arg) {
+	ast_node *n = _new_node(ast_type::capture);
+	n->len = static_cast<int>(capture_type::group);
+	n->left.reset(arg.p->clone());
+	return ast{n};
+}
+
+ast Cg(ast &&arg) {
+	ast_node *n = _new_node(ast_type::capture);
+	n->len = static_cast<int>(capture_type::group);
+	n->left = std::move(arg.p);
+	return ast{n};
+}
+
 // =========== repetition ===========
 ast operator*(const ast &lhs) {
 	ast_node *n = _new_node(ast_type::repetition);
@@ -251,6 +280,13 @@ ast operator!(ast &&arg) {
 	return ast{n};
 }
 
+// =========== capturer ===========
+
+capturer::~capturer() {}
+void capturer::open_group() {}
+void capturer::close_group() {}
+void capturer::capture(slice<const char>) {}
+
 }} // namespace zbs::peg
 
 #include "zbs/fmt.hh"
@@ -295,6 +331,9 @@ zbs::string recursive_dump(const ast_node *a) {
 		return fmt::sprintf("&%s", lhs.c_str());
 	case ast_type::call:
 		return fmt::sprintf("call()");
+	case ast_type::capture:
+		lhs = recursive_dump(a->left.get());
+		return fmt::sprintf("C(%s)", lhs.c_str());
 	}
 	return "";
 }

@@ -1,4 +1,5 @@
 #include "stf.hh"
+#include "zbs.hh"
 #include "zbs/peg.hh"
 
 STF_SUITE_NAME("zbs::peg");
@@ -100,4 +101,38 @@ STF_TEST("any") {
 	STF_ASSERT(!p.match("whatever7всёок;"));
 	STF_ASSERT(p.match("И ДАЖЕ ТАК/#$%&*@!)(;"));
 	STF_ASSERT(!p.match("И0ДАЖЕ9ТАК/#$%&*@!)(;"));
+}
+
+STF_TEST("set") {
+	using namespace zbs::peg;
+	bytecode p = compile(+S("abcdefghijklmnopqrstuvwxyz") >> ";");
+	STF_ASSERT(p.match("whatever;"));
+	STF_ASSERT(!p.match("Nope;"));
+	STF_ASSERT(!p.match("he he"));
+	STF_ASSERT(!p.match("абвгд"));
+
+	bytecode p2 = compile(+S("абвгдеёжзийклмнопрстуфхцчшщъыьэюя") >> ";");
+	STF_ASSERT(!p2.match("whatever;"));
+	STF_ASSERT(p2.match("привет;"));
+	STF_ASSERT(!p2.match("А вот нифига;"));
+	STF_ASSERT(!p2.match("Угу;"));
+}
+
+STF_TEST("capture") {
+	using namespace zbs::peg;
+	ast ident = R("AZ") | R("az") | R("09") | P("_");
+	ast optspace = *P(" ");
+	bytecode p = compile(
+		C(+ident) >>
+		optspace >> P("=") >> optspace >>
+		C(+ident) >> ";"
+	);
+	auto optresult = p.capture<sequential_capturer<zbs::string>>(
+		"name = nsf;",
+		[](zbs::slice<const char> s) { return zbs::string{s}; }
+	);
+	STF_ASSERT(optresult);
+	const auto &result = *optresult;
+	STF_ASSERT(result[0] == "name");
+	STF_ASSERT(result[1] == "nsf");
 }
