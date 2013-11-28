@@ -381,4 +381,19 @@ slice<T> slice_cast(slice<U> s) {
 	return slice<T>((T*)s.data(), s.len() * ratio);
 }
 
+template <typename T>
+struct hash;
+
+template <>
+struct hash<slice<const byte>> {
+	int operator()(slice<const byte> s, int seed);
+};
+
+template <typename T>
+struct hash<slice<T>> {
+	int operator()(slice<T> s, int seed) {
+		return hash<slice<const byte>>()(slice_cast<const byte>(s), seed);
+	}
+};
+
 } // namespace zbs

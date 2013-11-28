@@ -94,12 +94,7 @@ string operator+(slice<const char> lhs, string &&rhs) {
 }
 
 int hash<string>::operator()(const string &s, int seed) {
-	constexpr unsigned M0 = 2860486313U;
-	constexpr unsigned M1 = 3267000013U;
-	unsigned hash = M0 ^ seed;
-	for (const auto &b : s.sub())
-		hash = (hash ^ b) * M1;
-	return hash;
+	return hash<slice<const char>>()(s, seed);
 }
 
 string_iter::string_iter(slice<const char> s): _s(s), _r(0), _offset(0) {
