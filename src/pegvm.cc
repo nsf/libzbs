@@ -413,6 +413,7 @@ bytecode compile(const ast &tree, error *err) {
 }
 
 bool bytecode::match(slice<const char> input) {
+	captures.clear();
 	stack.clear();
 	stack.reserve(8);
 
