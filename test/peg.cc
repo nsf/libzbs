@@ -145,7 +145,7 @@ STF_TEST("tcltk layout (somewhat)") {
 	ast space = S(" \t");
 	ast opt_space_nl = *S(" \t\n");
 	ast line = opt_space_nl >> captoken >> *(+space >> captoken);
-	ast layout = line >> *(C(P("\n")) >> line);
+	ast layout = line >> *(C(P("\n")) >> line) >> opt_space_nl >> !any();
 	auto p = compile(layout);
 	auto optresult = p.capture(R"(
 		.f -   -      .div
