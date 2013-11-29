@@ -136,3 +136,37 @@ STF_TEST("capture") {
 	STF_ASSERT(result[0] == "name");
 	STF_ASSERT(result[1] == "nsf");
 }
+
+STF_TEST("tcltk layout (somewhat)") {
+	using namespace zbs::peg;
+	ast ident_symbol = R("az") | R("AZ") | R("09") | S("_.");
+	ast special = (P("x") | "-" | "^") >> !ident_symbol;
+	ast captoken = C(special | +ident_symbol);
+	ast space = S(" \t");
+	ast opt_space_nl = *S(" \t\n");
+	ast line = opt_space_nl >> captoken >> *(+space >> captoken);
+	ast layout = line >> *(C(P("\n")) >> line);
+	auto p = compile(layout);
+	auto optresult = p.capture(R"(
+		.f -   -      .div
+		.7 .8  .9     .mul
+		.4 .5  .6     .minus
+		.1 .2  .3     .plus
+		.0 .pm .clear .eq
+	)");
+
+	const char *expected[] = {
+		".f", "-",   "-",      ".div",   "\n",
+		".7", ".8",  ".9",     ".mul",   "\n",
+		".4", ".5",  ".6",     ".minus", "\n",
+		".1", ".2",  ".3",     ".plus",  "\n",
+		".0", ".pm", ".clear", ".eq",
+	};
+
+	STF_ASSERT(optresult);
+	const auto &result = *optresult;
+	STF_ASSERT(result.len() == 24);
+	for (int i = 0; i < 24; i++) {
+		STF_ASSERT(result[i] == expected[i]);
+	}
+}

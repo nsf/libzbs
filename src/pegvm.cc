@@ -307,101 +307,105 @@ static void codegen(vector<byte> &instbuf,
 	}
 }
 
+static int print_instruction(int ioff, const byte *ip) {
+	auto type = reinterpret_cast<const inst_common*>(ip)->type;
+	switch (type) {
+	case inst_type::any: {
+		auto ia = reinterpret_cast<const inst_any*>(ip);
+		printf("%4d: inst_any\n", ioff);
+		return inst_len(ia);
+	}
+	case inst_type::string: {
+		auto is = reinterpret_cast<const inst_string*>(ip);
+		printf("%4d: inst_string (%d, \"%.*s\")\n",
+			ioff, is->len, is->len, is->str);
+		return inst_len(is);
+	}
+	case inst_type::set: {
+		string s;
+		auto is = reinterpret_cast<const inst_set*>(ip);
+		for (int i = 0; i < 128; i++) {
+			if (is->test_ascii(i))
+				s.append(i);
+		}
+		for (int i = 0; i < is->len; i++) {
+			char buf[utf8::utf_max];
+			int n = utf8::encode_rune(buf, is->uni[i]);
+			s.append({buf, n});
+		}
+		printf("%4d: inst_set (\"%s\")\n",
+			ioff, s.c_str());
+		return inst_len(is);
+	}
+	case inst_type::range: {
+		char tmpfrom[4+1];
+		char tmpto[4+1];
+		auto ir = reinterpret_cast<const inst_range*>(ip);
+		tmpfrom[utf8::encode_rune(tmpfrom, ir->from())] = '\0';
+		tmpto[utf8::encode_rune(tmpto, ir->to())] = '\0';
+		printf("%4d: inst_range ('%s' - '%s')\n",
+			ioff, tmpfrom, tmpto);
+		return inst_len(ir);
+	}
+	case inst_type::choice: {
+		auto ic = reinterpret_cast<const inst_choice*>(ip);
+		printf("%4d: inst_choice (%d)\n", ioff, ic->offset);
+		return inst_len(ic);
+	}
+	case inst_type::commit: {
+		auto ic = reinterpret_cast<const inst_commit*>(ip);
+		printf("%4d: inst_commit (%d)\n", ioff, ic->offset);
+		return inst_len(ic);
+	}
+	case inst_type::partial_commit: {
+		auto ipc = reinterpret_cast<const inst_partial_commit*>(ip);
+		printf("%4d: inst_partial_commit (%d)\n", ioff, ipc->offset);
+		return inst_len(ipc);
+	}
+	case inst_type::rewind_commit: {
+		auto irc = reinterpret_cast<const inst_rewind_commit*>(ip);
+		printf("%4d: inst_rewind_commit (%d)\n", ioff, irc->offset);
+		return inst_len(irc);
+	}
+	case inst_type::fail: {
+		auto instf = reinterpret_cast<const inst_fail*>(ip);
+		printf("%4d: inst_fail\n", ioff);
+		return inst_len(instf);
+	}
+	case inst_type::fail_twice: {
+		auto instf = reinterpret_cast<const inst_fail_twice*>(ip);
+		printf("%4d: inst_fail_twice\n", ioff);
+		return inst_len(instf);
+	}
+	case inst_type::open_capture: {
+		auto ioc = reinterpret_cast<const inst_open_capture*>(ip);
+		printf("%4d: inst_open_capture (%s)\n", ioff,
+			to_string(ioc->ctype));
+		return inst_len(ioc);
+	}
+	case inst_type::close_capture: {
+		auto icc = reinterpret_cast<const inst_close_capture*>(ip);
+		printf("%4d: inst_close_capture\n", ioff);
+		return inst_len(icc);
+	}
+	case inst_type::end: {
+		printf("%4d: inst_end\n", ioff);
+		return -1;
+	}
+	default:
+		printf("%d: unknown instruction (%d)\n",
+			ioff, type);
+		return -1;
+	}
+}
+
 static void dump(slice<const byte> code) {
 	const byte *ip = code.data();
 	for (;;) {
-		auto type = reinterpret_cast<const inst_common*>(ip)->type;
-		int ioff = ip-code.data();
-		switch (type) {
-		case inst_type::any: {
-			auto ia = reinterpret_cast<const inst_any*>(ip);
-			printf("%4d: inst_any\n", ioff);
-			ip += inst_len(ia);
+		int len = print_instruction(ip-code.data(), ip);
+		if (len == -1)
 			break;
-		}
-		case inst_type::string: {
-			auto is = reinterpret_cast<const inst_string*>(ip);
-			printf("%4d: inst_string (%d, \"%.*s\")\n",
-				ioff, is->len, is->len, is->str);
-			ip += inst_len(is);
-			break;
-		}
-		case inst_type::set: {
-			auto is = reinterpret_cast<const inst_set*>(ip);
-			printf("%4d: inst_set (%d unicode code points)\n",
-				ioff, is->len);
-			ip += inst_len(is);
-			break;
-		}
-		case inst_type::range: {
-			char tmpfrom[4+1];
-			char tmpto[4+1];
-			auto ir = reinterpret_cast<const inst_range*>(ip);
-			tmpfrom[utf8::encode_rune(tmpfrom, ir->from())] = '\0';
-			tmpto[utf8::encode_rune(tmpto, ir->to())] = '\0';
-			printf("%4d: inst_range ('%s' - '%s')\n",
-				ioff, tmpfrom, tmpto);
-			ip += inst_len(ir);
-			break;
-		}
-		case inst_type::choice: {
-			auto ic = reinterpret_cast<const inst_choice*>(ip);
-			printf("%4d: inst_choice (%d)\n", ioff, ic->offset);
-			ip += inst_len(ic);
-			break;
-		}
-		case inst_type::commit: {
-			auto ic = reinterpret_cast<const inst_commit*>(ip);
-			printf("%4d: inst_commit (%d)\n", ioff, ic->offset);
-			ip += inst_len(ic);
-			break;
-		}
-		case inst_type::partial_commit: {
-			auto ipc = reinterpret_cast<const inst_partial_commit*>(ip);
-			printf("%4d: inst_partial_commit (%d)\n", ioff, ipc->offset);
-			ip += inst_len(ipc);
-			break;
-		}
-		case inst_type::rewind_commit: {
-			auto irc = reinterpret_cast<const inst_rewind_commit*>(ip);
-			printf("%4d: inst_rewind_commit (%d)\n", ioff, irc->offset);
-			ip += inst_len(irc);
-			break;
-		}
-		case inst_type::fail: {
-			auto instf = reinterpret_cast<const inst_fail*>(ip);
-			printf("%4d: inst_fail\n", ioff);
-			ip += inst_len(instf);
-			break;
-		}
-		case inst_type::fail_twice: {
-			auto instf = reinterpret_cast<const inst_fail_twice*>(ip);
-			printf("%4d: inst_fail_twice\n", ioff);
-			ip += inst_len(instf);
-			break;
-		}
-		case inst_type::open_capture: {
-			auto ioc = reinterpret_cast<const inst_open_capture*>(ip);
-			printf("%4d: inst_open_capture (%s)\n", ioff,
-				to_string(ioc->ctype));
-			ip += inst_len(ioc);
-			break;
-		}
-		case inst_type::close_capture: {
-			auto icc = reinterpret_cast<const inst_close_capture*>(ip);
-			printf("%4d: inst_close_capture\n", ioff);
-			ip += inst_len(icc);
-			break;
-		}
-		case inst_type::end: {
-			printf("%4d: inst_end\n", ioff);
-			return;
-		}
-		default:
-			printf("%d: unknown instruction (%d)\n",
-				ioff, type);
-			return;
-		}
+		ip += len;
 	}
 }
 
@@ -413,6 +417,7 @@ bytecode compile(const ast &tree, error *err) {
 }
 
 bool bytecode::match(slice<const char> input) {
+	initial_input = input;
 	captures.clear();
 	stack.clear();
 	stack.reserve(8);
@@ -489,6 +494,7 @@ bool bytecode::match(slice<const char> input) {
 			stack.append({
 				input,
 				ic->offset,
+				captures.len(),
 			});
 			ip += inst_len(ic);
 			break;
@@ -503,14 +509,18 @@ bool bytecode::match(slice<const char> input) {
 		case inst_type::partial_commit: {
 			auto ipc = reinterpret_cast<const inst_partial_commit*>(ip);
 			_ZBS_ASSERT(stack.len() > 0);
-			stack[stack.len()-1].input = input;
+			auto &last = stack[stack.len()-1];
+			last.input = input;
+			last.captures_len = captures.len();
 			ip = code.data() + ipc->offset;
 			break;
 		}
 		case inst_type::rewind_commit: {
 			auto irc = reinterpret_cast<const inst_rewind_commit*>(ip);
 			_ZBS_ASSERT(stack.len() > 0);
-			input = stack[stack.len()-1].input;
+			const auto &last = stack[stack.len()-1];
+			input = last.input;
+			captures.resize(last.captures_len);
 			stack.resize(stack.len()-1);
 			ip = code.data() + irc->offset;
 			break;
@@ -537,6 +547,7 @@ bool bytecode::match(slice<const char> input) {
 			if (stack.len() != 0) {
 				const auto &last = stack[stack.len()-1];
 				input = last.input;
+				captures.resize(last.captures_len);
 				ip = code.data() + last.offset;
 				stack.resize(stack.len()-1);
 			} else {

@@ -194,6 +194,7 @@ class bytecode {
 	struct stack_t {
 		slice<const char> input;
 		int offset;
+		int captures_len;
 	};
 
 	struct capture_t {
