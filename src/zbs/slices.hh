@@ -188,6 +188,12 @@ void sort(slice<T> s) {
 	std::sort(s.data(), s.data() + s.len());
 }
 
+/// Sorts the slice `s` using `comp` for comparison.
+template <typename T, typename Comparer>
+void sort(slice<T> s, Comparer comp) {
+	std::sort(s.data(), s.data() + s.len(), comp);
+}
+
 //
 // TODO:
 // bool             starts_with(slice<T> s, slice<U> prefix)                     // DONE

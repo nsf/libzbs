@@ -227,3 +227,14 @@ STF_TEST("slices::sort(slice<T>)") {
 		prev = &cur;
 	}
 }
+
+STF_TEST("slices::sort(slice<T>, Comparer)") {
+	vector<int> ints = {
+		5, 10, 7, 12, 4, -8
+	};
+	slices::sort(ints.sub(), [](int a, int b) { return b < a; });
+	int prev = 999;
+	for (int cur : ints) {
+		STF_ASSERT(cur < prev);
+	}
+}
